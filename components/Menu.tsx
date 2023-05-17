@@ -32,7 +32,7 @@ export const Menu: FC<props> = ({ showMenu, setShowMenu }) => {
 
   return (
     <>
-      <div ref={wrapperRef} className="bg-white absolute z-20 w-60 h-[100%] ">
+      <div ref={wrapperRef} className="bg-red-500 absolute z-20 w-60 h-[100%] ">
 
       </div>
 
