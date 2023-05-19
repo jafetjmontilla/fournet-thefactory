@@ -90,6 +90,10 @@ export const fetchApi: CallableFunction = async ({
 
 type queries = {
   fileUpload: string;
+  getUploadFiles: string,
+  createTasaBCV: String,
+  getTasaBCV: String,
+  deleteTasaBCV: String
 };
 
 export const queries: queries = {
@@ -102,5 +106,41 @@ export const queries: queries = {
       createdAt
     }
   }`,
+  getUploadFiles: `query ( $skip: Int, $limit: Int )
+  {
+    getUploadFiles(skip:$skip, limit:$limit, ){
+      total
+      results{
+        _id
+        lote
+        path
+        createdAt
+      }
+    }
+  }`,
+  createTasaBCV: `mutation($fecha:Date, $tasa:Float)
+  {
+    createTasaBCV(fecha:$fecha, tasa:$tasa){
+      _id
+      tasa
+      fecha
+      createdAt
+    }
+  }`,
+  getTasaBCV: `query ($sort:sortCriteriaTasaBCV, $skip:Int, $limit:Int )
+  {
+    getTasaBCV(skip:$skip, limit:$limit, sort:$sort ){
+      total
+      results{
+        _id
+        tasa
+        fecha
+        createdAt
+      }
+    }
+  }`,
+  deleteTasaBCV: `mutation ($_id:ID )
+  {
+    deleteTasaBCV(_id:$_id)
+  }`,
 };
-
