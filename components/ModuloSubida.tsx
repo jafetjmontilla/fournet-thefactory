@@ -8,19 +8,20 @@ export const ModuloSubida = ({ setFilesZip }) => {
 
   const subir_archivo = async () => {
     if (file) {
-      const result: any = await fetchApi({
+      await fetchApi({
         query: queries.fileUpload,
         variables: { file, },
         type: "formData"
-      })
-      await setFilesZip((old: any) => {
-        old?.results?.unshift(result)
-        old.total = old.total + 1
-        const asd = {
-          total: old.total,
-          results: old.results.length > 7 ? old.results.slice(0, 7) : old.results
-        }
-        return asd
+      }).then((result) => {
+        setFilesZip((old: any) => {
+          old?.results?.unshift(result)
+          old.total = old?.total + 1
+          const asd = {
+            total: old?.total,
+            results: old?.results.length > 7 ? old?.results.slice(0, 7) : old?.results
+          }
+          return asd
+        })
       })
       setFile(null)
       setDisabled(true)
