@@ -1,10 +1,13 @@
 import React from 'react'
 import { AppProps } from 'next/app'
+import { DefaultLayout } from "../layouts/DefaultLayout";
 import '../styles/index.css'
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
-      <Component {...pageProps} />
+      <DefaultLayout>
+        <Component {...pageProps} />
+      </DefaultLayout>
       <style jsx global>
         {`
         body {
@@ -12,6 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         ::-webkit-scrollbar {
           width: 8px;
+          height: 8px;
         }
         ::-webkit-scrollbar-track {
           background: #f1f1f1
@@ -19,9 +23,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
 
         ::-webkit-scrollbar-thumb {
-          background: pink;
+          background: #a99cbc;
           border-radius: 6px;
-          height: 50%;
+          height: 30%;
         }
       `}
       </style>

@@ -93,7 +93,8 @@ type queries = {
   getUploadFiles: string,
   createTasaBCV: String,
   getTasaBCV: String,
-  deleteTasaBCV: String
+  deleteTasaBCV: String,
+  getLog: string
 };
 
 export const queries: queries = {
@@ -142,5 +143,21 @@ export const queries: queries = {
   deleteTasaBCV: `mutation ($_id:ID )
   {
     deleteTasaBCV(_id:$_id)
+  }`,
+  getLog: `query ( $skip:Int, $limit:Int, $time:Date )
+  {
+    getLog( skip:$skip, limit:$limit, time:$time ){
+      total
+      results{
+        sn_onu
+        id_servicio
+        estado
+        estadoValir
+        usuario
+        smartOlt
+        confirmation
+        createdAt
+      }
+    }
   }`,
 };
