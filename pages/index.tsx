@@ -49,6 +49,14 @@ export default function Home() {
         <div className="*bg-red-300 w-[25%] flex justify-center">
           <div className="w-80 h-60 mt-10">
             <ModuloSubida setFilesZip={setFilesZip} />
+            <div className="ml-2 mr-2 mt-[-30px]">
+              <p>
+                Antes de subir el archivo .exel debe cargar la tasa del BCV de los dias en los que se pagó las facturas.
+              </p>
+              <p className="mt-2">
+                Si no, el sistema no genera el correspondiente archivo json para las facturas de ese día.
+              </p>
+            </div>
           </div>
         </div>
         <div className="*bg-violet-100 w-[50%] h-[400px] flex justify-center">

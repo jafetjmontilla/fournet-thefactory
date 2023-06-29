@@ -51,7 +51,7 @@ export default function Logs() {
       fetchApi({
         query: queries.getLog,
         variables: {
-          limit: 50,
+          limit: 500,
           skip: 0,
         },
       }).then((resp: any) => {
