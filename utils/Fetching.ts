@@ -95,6 +95,7 @@ type queries = {
   getTasaBCV: String,
   deleteTasaBCV: String,
   getLog: string
+  resyncOnus: string
 };
 
 export const queries: queries = {
@@ -159,5 +160,9 @@ export const queries: queries = {
         createdAt
       }
     }
+  }`,
+  resyncOnus: `mutation ( $args:[String] )
+  {
+    resyncOnus( args:$args )
   }`,
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, EditarIcon, FolderPlus, TableCells } from "../icons";
 import { fetchApi, queries } from "../utils/Fetching";
+import { BotonConfirmar } from "./BotonConfimar";
 
 export const ModuloSubida = ({ setFilesZip }) => {
   const [file, setFile] = useState<any>()
@@ -96,13 +97,3 @@ export const ModuloSubida = ({ setFilesZip }) => {
 
 
 
-const BotonConfirmar = ({ onClick, disabled }) => {
-  return (
-    <div
-      onClick={onClick}
-      className={`flex gap-1 items-center justify-center  w-full  px-3 py-1 ${!disabled ? "bg-secondary hover:scale-105 transition transform" : "bg-gray-100"}`}
-    >
-      Confirmar <CheckIcon />
-    </div>
-  );
-};
