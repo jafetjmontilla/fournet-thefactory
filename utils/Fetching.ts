@@ -1,20 +1,25 @@
-import { api } from "../api";
+import { apiBodas, apiJaihom } from "../api";
 
 const types = {
   json: "",
   formData: "",
 };
 
-interface fetchApiProps {
+interface conector {
+  api?: any
   query: string;
   variables: object;
   type: keyof typeof types;
 }
-export const fetchApi: CallableFunction = async ({
-  query = ``,
-  variables = {},
-  type = "json",
-}: fetchApiProps): Promise<any> => {
+export const fetchApiBodas: CallableFunction = async ({ query, type, variables }: conector): Promise<any> => {
+  return await conector({ api: apiBodas, query, variables, type })
+}
+
+export const fetchApiJaihom: CallableFunction = async ({ query, type, variables }: conector): Promise<any> => {
+  return await conector({ api: apiJaihom, query, variables, type })
+}
+
+const conector: CallableFunction = async ({ api, query = ``, variables = {}, type = "json", }: conector): Promise<any> => {
   try {
     if (type === "json") {
       const {
@@ -86,27 +91,93 @@ export const fetchApi: CallableFunction = async ({
   }
 };
 
-
-
 type queries = {
-  fileUpload: string;
-  getUploadFiles: string,
-  createTasaBCV: String,
-  getTasaBCV: String,
-  deleteTasaBCV: String,
+  fileUpload: string
+  getUploadFiles: string
+  createTasaBCV: String
+  getTasaBCV: String
+  deleteTasaBCV: String
   getLog: string
   resyncOnus: string
+  getFacturas: string
+  getTransacciones: string
+  uploadBanco: String
+  runConciliation: String
 };
 
 export const queries: queries = {
-  fileUpload: `mutation($file:Upload!)
+  getTransacciones: `query($args:inputTransaccion,  $sort:sortCriteriaTransaccion, $skip:Int, $limit:Int ){
+    getTransacciones(args:$args, sort:$sort, skip:$skip, limit:$limit){
+      total
+      results{
+        _id
+        referencia
+        banco
+        monto
+        facturas{
+          id_factura
+          total_cobrado
+        }
+        conciliado
+        fecha
+        createdAt
+        updatedAt
+      }
+    }
+  }`,
+  getFacturas: `query($args:inputFactura,  $sort:sortCriteriaFactura, $skip:Int, $limit:Int ){
+    getFacturas(args:$args, sort:$sort, skip:$skip, limit:$limit){
+      total
+      results{
+        _id
+        id_factura
+        fecha_pago
+        scanedFacturas
+        scanedFacturasTotal
+        fecha_pago_ref
+        total_cobrado
+        referencia
+        forma_pagoID
+        forma_pago
+        cajeroID
+        cajero
+        pagado
+        transacciones{
+          _id
+          banco
+          fecha
+          referencia
+          descripcion
+          monto
+          conciliado
+          facturas{
+            _id
+            id_factura
+          }
+          createdAt
+          updatedAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  }`,
+  fileUpload: `mutation($file:Upload!, $args:String)
   {
-    fileUpload(file:$file){
+    fileUpload(file:$file, args:$args){
       _id
       lote
       path
       createdAt
     }
+  }`,
+  runConciliation: `mutation
+  {
+    runConciliation
+  }`,
+  uploadBanco: `mutation($file:Upload!, $banco:String!)
+  {
+    uploadBanco(file:$file, banco:$banco)
   }`,
   getUploadFiles: `query ( $skip: Int, $limit: Int )
   {

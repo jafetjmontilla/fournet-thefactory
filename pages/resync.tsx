@@ -1,7 +1,7 @@
 import Select from "react-select";
 import makeAnimated from 'react-select/animated';
 import { BotonConfirmar } from "../components/BotonConfimar";
-import { fetchApi, queries } from "../utils/Fetching";
+import { fetchApiBodas, queries } from "../utils/Fetching";
 import { useEffect, useState } from "react";
 
 
@@ -14,7 +14,7 @@ export default function Resync() {
   const [value, setValue] = useState({ olts: [], onus: [] })
 
   useEffect(() => {
-    fetchApi({
+    fetchApiBodas({
       query: queries.resyncOnus,
     }).then(data => {
       setData(JSON.parse(data))
@@ -42,7 +42,7 @@ export default function Resync() {
   }, [value])
 
   const handlerClick = () => {
-    fetchApi({
+    fetchApiBodas({
       query: queries.resyncOnus,
       variables: {
         args: JSON.stringify(value)

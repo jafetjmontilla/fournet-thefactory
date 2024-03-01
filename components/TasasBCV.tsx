@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { CheckIcon, IconCancel, IconDelete, IconFolderArrowDown, IconUsdSquare } from "../icons"
 import { FC, memo, useEffect, useRef, useState } from "react";
-import { fetchApi, queries } from "../utils/Fetching";
+import { fetchApiBodas, queries } from "../utils/Fetching";
+import { getDate } from "../utils/time";
 
 const options = {
   year: "numeric",
@@ -35,7 +36,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
   const [showConfirmation, setShowConfirmation] = useState<any>({ value: false, values: [] })
 
   useEffect(() => {
-    fetchApi({
+    fetchApiBodas({
       query: queries.getTasaBCV,
       variables: {
         limit: 0,
@@ -56,7 +57,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
   }, [tasasBCV?.results])
 
   const createTasa = async () => {
-    const result: any = await fetchApi({
+    const result: any = await fetchApiBodas({
       query: queries.createTasaBCV,
       variables: {
         fecha: new Date(`${refFecha.current.value} 00:00:00`),
@@ -68,7 +69,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
   }
 
   const deleteTasa = async (_id: any) => {
-    const result: any = await fetchApi({
+    const result: any = await fetchApiBodas({
       query: queries.deleteTasaBCV,
       variables: { _id },
     })
@@ -96,7 +97,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
               <div className="flex pb-2" >
                 <IconUsdSquare className="w-8 h-8 text-gray-600" />
                 <div className="flex items-center pl-2">
-                  <span className="w-16 text-xs">{`${format(new Date(elem?.fecha), "es-ES", options)}`}</span>
+                  <span className="w-16 text-xs">{`${getDate(elem?.fecha)}`}</span>
                   <span className="w-16 font-bold text-sm text-right">{elem?.tasa?.toFixed(2)}</span>
                   <IconDelete className="w-6 h-6 ml-6 cursor-pointer text-gray-600" onClick={() => {
                     !showConfirmation?.value && setShowConfirmation((old: any) => {

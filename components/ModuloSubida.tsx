@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, EditarIcon, FolderPlus, TableCells } from "../icons";
-import { fetchApi, queries } from "../utils/Fetching";
+import { fetchApiBodas, queries } from "../utils/Fetching";
 import { BotonConfirmar } from "./BotonConfimar";
 
-export const ModuloSubida = ({ setFilesZip }) => {
+export const ModuloSubida = ({ setFilesZip, args, ...props }) => {
   const [file, setFile] = useState<any>()
   const [disabled, setDisabled] = useState<any>(true)
 
   const subir_archivo = async () => {
     if (file) {
-      await fetchApi({
+      await fetchApiBodas({
         query: queries.fileUpload,
-        variables: { file, },
+        variables: { file, args },
         type: "formData"
       }).then((result) => {
         setFilesZip((old: any) => {
@@ -53,10 +53,10 @@ export const ModuloSubida = ({ setFilesZip }) => {
           id="file"
           type="file"
           name="file"
-          accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           required
           onChange={(e) => handleChange(e)}
           className="hidden"
+          {...props}
         />
         <label
           htmlFor="file"

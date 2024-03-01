@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { fetchApi, queries } from "../utils/Fetching"
+import { fetchApiBodas, queries } from "../utils/Fetching"
 import { ListLog } from "../components/ListLog"
 
 export default function Logs() {
@@ -28,7 +28,7 @@ export default function Logs() {
 
   const getInterval = (lasTime?: any) => {
     const progressInterval = setInterval(() => {
-      fetchApi({
+      fetchApiBodas({
         query: queries.getLog,
         variables: {
           time: lasTime
@@ -48,7 +48,7 @@ export default function Logs() {
 
   useEffect(() => {
     if (isMounted) {
-      fetchApi({
+      fetchApiBodas({
         query: queries.getLog,
         variables: {
           limit: 500,
