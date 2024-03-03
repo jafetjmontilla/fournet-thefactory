@@ -11,7 +11,7 @@ import { registerLocale, setDefaultLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import es from 'date-fns/locale/es';
 registerLocale('es', es)
-
+import { getDataTreeFacturaWispHup, getDataTreeTransaction } from "../utils/funciones.js"
 import { usePDF } from 'react-to-pdf';
 
 import dynamic from "next/dynamic";
@@ -32,6 +32,7 @@ import { getDate, getDateTime, obtenerPrimerYUltimoDiaSemana } from "../utils/ti
 import { get } from "http";
 import ClickAwayListener from "react-click-away-listener";
 import { PDFViewer } from "@react-pdf/renderer";
+import { TreeItem } from "../components/TreeItem";
 
 const columnHelperFactura = createColumnHelper<Factura>()
 const columnHelperTransaction = createColumnHelper<Transaction>()
@@ -79,7 +80,7 @@ export default function Home() {
   const [showMenu, setShowMenu] = useState<boolean>(false)
 
   const [file, setFile] = useState<any>()
-  const [tasasBCV, setTasasBCV] = useState<any>()
+  const [showFacturaAndTransaction, setShowFacturaAndTransaction] = useState<any>({ state: false, title: "", payload: {} })
   const [selectRow, setSelectRow] = useState<string | null>(null)
   const [searchColumn, setSearchColumn] = useState<string | null>(null)
   const [search, setSearch] = useState<boolean>(false)
@@ -129,16 +130,41 @@ export default function Home() {
     console.log(e.target.value)
     setStateFilter(e.target.value)
   }
-  useEffect(() => {
-    console.log(selectRow)
-  }, [selectRow])
 
+  const handleGetFactura = (id_factura: string) => {
+    setShowFacturaAndTransaction({ state: true, title: "factura" })
+    fetchApiJaihom({
+      query: queries.getFacturaWispHup,
+      variables: {
+        id_factura
+      },
+    }).then((resp: string) => {
+      console.log(getDataTreeFacturaWispHup(JSON.parse(resp)))
+
+      setShowFacturaAndTransaction({ state: true, title: "factura", payload: getDataTreeFacturaWispHup(JSON.parse(resp)) })
+    })
+  }
+
+  const handleGetReferencia = (id_referencia: string) => {
+    setShowFacturaAndTransaction({ state: true, title: "transacción" })
+    console.log(id_referencia)
+    fetchApiJaihom({
+      query: queries.getTransacciones,
+      variables: {
+        args: { referencia: id_referencia }
+      },
+    }).then((resp: FetchTransaction) => {
+      console.log(1005, resp.results[0])
+
+      setShowFacturaAndTransaction({ state: true, title: "transacción", payload: getDataTreeTransaction(resp.results[0]) })
+    })
+  }
 
   const columnsFactura = useMemo<ColumnDef<Factura>[]>(() => [
     columnHelperFactura.accessor('id_factura', {
       id: 'id_factura',
       header: () => <span>id_factura</span>,
-      cell: info => <div className="text-center">{info.getValue()}</div>,
+      cell: info => <div onClick={() => handleGetFactura(info.getValue())} className="text-center">{info.getValue()}</div>,
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
@@ -189,16 +215,15 @@ export default function Home() {
       footer: info => info.column.id,
       cell: info => {
         if (info.getValue().length) {
-          return <div className="text-right" >{info.getValue().map(el => el.referencia).toString().replace(/,/g, " ")}</div>
+          return (
+            <div className="w-full flex flex-wrap space-x-2 justify-end">
+              {info.getValue().map((elem, idx) =>
+                <span onClick={() => handleGetReferencia(elem.referencia)} key={idx} className="">
+                  {elem.referencia}
+                </span>)}
+            </div>
+          )
         }
-        // return (
-        //   <>
-        //     {selectRow === info.row.id && <div className="w-full bg-blue-300 ">
-        //       <input value={info.row.id} ref={inputRef} type="number" onKeyDown={handleChange} className="w-full h-4 text-right text-xs font-medium" />
-
-        //     </div>}
-        //   </>
-        // )
       },
       enableColumnFilter: false
     }),
@@ -214,7 +239,7 @@ export default function Home() {
     columnHelperTransaction.accessor('referencia', {
       id: 'referencia',
       header: () => <span>referencia banco</span>,
-      cell: info => <div className="text-end">{info.getValue()}</div>,
+      cell: info => <div onClick={() => handleGetReferencia(info.getValue())} className="text-end">{info.getValue()}</div>,
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
@@ -281,16 +306,15 @@ export default function Home() {
       footer: info => info.column.id,
       cell: info => {
         if (info.getValue().length) {
-          return <div className="text-right" >{info.getValue().map(el => el.id_factura).toString().replace(/,/g, " ")}</div>
+          return (
+            <div className="w-full flex flex-wrap space-x-2 justify-end">
+              {info.getValue().map((elem, idx) =>
+                <span onClick={() => handleGetFactura(elem.id_factura)} key={idx} className="">
+                  {elem.id_factura}
+                </span>)}
+            </div>
+          )
         }
-        // return (
-        //   <>
-        //     {selectRow === info.row.id && <div className="w-full bg-blue-300 ">
-        //       <input value={info.row.id} ref={inputRef} type="number" onKeyDown={handleChange} className="w-full h-4 text-right text-xs font-medium" />
-
-        //     </div>}
-        //   </>
-        // )
       },
       enableColumnFilter: false
     }),
@@ -341,10 +365,6 @@ export default function Home() {
       setRangeFilter(null)
     }
   }, [startDateFilter, endDateFilter])
-
-  useEffect(() => {
-    console.log(rangeFilter)
-  }, [rangeFilter])
 
   useEffect(() => {
     let args: any = {}
@@ -400,10 +420,9 @@ export default function Home() {
       }
     }
     if (stateFilter === "all") { }
-    if (stateFilter === "noConciliated") { { args = { ...args, pagado: false } } }
     if (typeFilter === "factura") {
+      if (stateFilter === "noConciliated") { { args = { ...args, pagado: false } } }
       if (stateFilter === "conciliated") { args = { ...args, pagado: true } }
-      console.log(1000005, args)
       fetchApiJaihom({
         query: queries.getFacturas,
         variables: {
@@ -417,10 +436,9 @@ export default function Home() {
       })
     }
     if (typeFilter === "transaccion") {
-      if (stateFilter === "conciliated") { args = { ...args, conciliado: false } }
+      if (stateFilter === "noConciliated") { args = { ...args, conciliado: false } }
+      if (stateFilter === "conciliated") { args = { ...args, conciliado: true } }
       delete args.pagado
-      args.conciliado = false
-      console.log(1000005, args)
       fetchApiJaihom({
         query: queries.getTransacciones,
         variables: {
@@ -453,11 +471,6 @@ export default function Home() {
       }
     }
   }, [table.getState().columnFilters[0]?.id])
-
-  useEffect(() => {
-    console.log(file)
-  }, [file])
-
 
   const handleChangeFile = (e, banco) => {
     e.preventDefault();
@@ -495,9 +508,32 @@ export default function Home() {
 
   return (
     <div className="flex w-full text-xs">
-      {showSpinner && <div className="absolute z-50 w-full top-0 left-0 h-full bg-gray-600 opacity-50 flex items-center justify-center ">
-        <div id="loader" className="absolute"></div>
-      </div>}
+      {showFacturaAndTransaction.state &&
+        <div className="absolute w-full h-[calc(100%-100px)] z-50 justify-center flex">
+          {/* <ClickAwayListener onClickAway={() => setShowFacturaWispHup({ state: false })}> */}
+          <div className="bg-gray-200 flex flex-col w-[500px] h-[calc(100%-84px)] translate-y-[46px] rounded-xl shadow-lg border-[1px] border-gray-300">
+            <div className="bg-white flex w-full h-10 rounded-xl rounded-b-none items-center px-2 border-b-[1px] border-gray-300 shadow-sm">
+              <div className="flex-1 flex items-center" >
+                <span className="capitalize text-lg font-semibold text-gray-700">{showFacturaAndTransaction.title}</span>
+              </div>
+              <div onClick={() => setShowFacturaAndTransaction(false)} className="bg-gray-50 w-8 h-8 hover:bg-gray-200 rounded-full flex justify-center cursor-pointer text-lg text-gray-700 pt-0">x</div>
+            </div>
+            <div className="flex-1 overflow-y-scroll p-2">
+              <div className="w-full bg-white rounded-xl">
+                <TreeItem data={showFacturaAndTransaction.payload} />
+              </div>
+            </div>
+            <div className="bg-gray-200 h-2" />
+          </div>
+          {/* </ClickAwayListener> */}
+        </div>
+      }
+
+      {
+        showSpinner && <div className="absolute z-50 w-full top-0 left-0 h-full bg-gray-600 opacity-50 flex items-center justify-center ">
+          <div id="loader" className="absolute"></div>
+        </div>
+      }
       <input id="child" type="number" onKeyDown={handleChange} className={`${!inputView && "hidden"} h-4 text-right text-xs font-medium`} />
       <div className="w-full h-[calc(100vh-120px)] overflow-auto">
         <div className="bg-white flex flex-col w-[calc(1280px-40px)] xl:w-[calc(100%-64px)] h-[calc(100vh-160px)] border border-gray-300 rounded-xl mt-10 p-2 mx-2 xl:ml-8">
@@ -752,11 +788,11 @@ export default function Home() {
                               e.target.id = "parent"
                               const rootelement = document.getElementById("parent")
                               const child = document.getElementById("child")
-                              if (rootelement) {
-                                rootelement?.appendChild(child)
-                                setInputView(true)
-                                child.focus()
-                              }
+                              // if (rootelement) {
+                              //   rootelement?.appendChild(child)
+                              //   setInputView(true)
+                              //   child.focus()
+                              // }
                             }
                           }}
                           onDoubleClick={(e: any) => {
@@ -910,7 +946,7 @@ export default function Home() {
       }
 
       `}</style>
-    </div>
+    </div >
   )
 }
 

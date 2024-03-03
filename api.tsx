@@ -1,13 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 
-
 type Fetching = {
     graphql: CallableFunction
 }
-
-
-
-
 
 const instanceBodas: AxiosInstance = axios.create({ baseURL: process.env.NEXT_PUBLIC_BASE_URL_BODAS })
 export const apiBodas: Fetching = {

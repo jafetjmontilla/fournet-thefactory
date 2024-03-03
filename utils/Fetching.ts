@@ -103,9 +103,13 @@ type queries = {
   getTransacciones: string
   uploadBanco: String
   runConciliation: String
+  getFacturaWispHup: String
 };
 
 export const queries: queries = {
+  getFacturaWispHup: `query($id_factura:String ){
+    getFacturaWispHup(id_factura:$id_factura)
+  }`,
   getTransacciones: `query($args:inputTransaccion,  $sort:sortCriteriaTransaccion, $skip:Int, $limit:Int ){
     getTransacciones(args:$args, sort:$sort, skip:$skip, limit:$limit){
       total
@@ -117,6 +121,11 @@ export const queries: queries = {
         facturas{
           id_factura
           total_cobrado
+          fecha_pago
+          fecha_pago_ref
+          referencia
+          forma_pago
+          cajero
         }
         conciliado
         fecha
