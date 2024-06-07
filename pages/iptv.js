@@ -5,7 +5,7 @@ export default function Prueba() {
 
   const channel = [
     { title: "Canal 001", url: "https://190.124.28.15/livestream/ESPN_EXTRA.m3u8" },
-    { title: "Canal 002", url: "https://stream.sistemasjaihom.com/mystream?controls=1" }
+    { title: "Canal 002", url: "https://airtek.tv/livestream/HISTORY_CHANNEL_HD.m3u8" }
   ]
 
   return (

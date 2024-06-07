@@ -1,3 +1,5 @@
+import { read, utils, writeFile } from 'xlsx';
+
 const getTreeArr = (f) => {
   let arr = []
   for (const key in f) {
@@ -57,6 +59,45 @@ export const getDataTreeFacturaWispHup = (facturaWispHup) => {
   }
 
   return getTreeArr(f)
+}
+
+export const generateXLSX = ({ tableMaster, data }) => {
+  try {
+    const visibility = tableMaster?.getVisibleLeafColumns().map(elem => elem.id)
+    const dataFiltrada = data.map((obj) => {
+      const newObj = {};
+      for (const prop of visibility) {
+        if (obj.hasOwnProperty(prop)) {
+          let value = obj[prop]
+          if (typeof value === "object") {
+            value = value?.map(elem => elem.id_factura)?.toString()
+          }
+          if (typeof value === "string" && value?.slice(-1) === "Z") {
+            const a = value.slice(0, 10).split("-")
+            value = `${a[2]}-${a[1]}-${a[0]}`
+          }
+          if (typeof value === "number") {
+            value = value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          }
+          if (typeof value === "boolean") {
+            value = value ? "ok" : ""
+          }
+          newObj[prop] = value;
+        }
+      }
+      return newObj;
+    });
+
+    const ws = utils.json_to_sheet(dataFiltrada);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, 'Sheet1');
+    console.log(wb)
+    // Genera un blob con el archivo XLSX
+    writeFile(wb, 'conciliacion.xlsx', { bookType: 'xlsx', type: 'array' })
+
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 export const getDataTreeTransaction = (transaction) => {

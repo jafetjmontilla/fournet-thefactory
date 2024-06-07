@@ -21,7 +21,10 @@ export const TreeItem: FC<props> = ({ data, interLine = 1 }) => {
                 ? item.value.slice(-4) !== "000Z"
                   ? item.value
                   : getDateTime(item.value)
-                : item.value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                : ["sub_total", "total_cobrado", "total", "total_facturas", "monto"].includes(item.key)
+                  ? item.value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : item.value
+              }
             </strong>
           )}
         </li>

@@ -104,9 +104,13 @@ type queries = {
   uploadBanco: String
   runConciliation: String
   getFacturaWispHup: String
+  refreshFacturaWispHup: string
 };
 
 export const queries: queries = {
+  refreshFacturaWispHup: `mutation($ids_factura:[String] ){
+    refreshFacturaWispHup(ids_factura:$ids_factura)
+  }`,
   getFacturaWispHup: `query($id_factura:String ){
     getFacturaWispHup(id_factura:$id_factura)
   }`,
@@ -128,6 +132,7 @@ export const queries: queries = {
           cajero
         }
         conciliado
+        criterio
         fecha
         createdAt
         updatedAt
@@ -151,6 +156,8 @@ export const queries: queries = {
         cajeroID
         cajero
         pagado
+        recargado
+        criterio
         transacciones{
           _id
           banco
@@ -159,6 +166,7 @@ export const queries: queries = {
           descripcion
           monto
           conciliado
+          criterio
           facturas{
             _id
             id_factura

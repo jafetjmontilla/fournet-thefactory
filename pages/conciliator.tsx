@@ -1,4 +1,5 @@
 "use client"
+import { RiFileExcel2Fill } from "react-icons/ri";
 import { IoReceiptOutline } from "react-icons/io5";
 import { FiPackage, FiPrinter } from "react-icons/fi";
 import { GrDocumentPdf } from "react-icons/gr";
@@ -11,7 +12,7 @@ import { registerLocale, setDefaultLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import es from 'date-fns/locale/es';
 registerLocale('es', es)
-import { getDataTreeFacturaWispHup, getDataTreeTransaction } from "../utils/funciones.js"
+import { generateXLSX, getDataTreeFacturaWispHup, getDataTreeTransaction } from "../utils/funciones.js"
 import { usePDF } from 'react-to-pdf';
 
 import dynamic from "next/dynamic";
@@ -81,6 +82,7 @@ export default function Home() {
 
   const [file, setFile] = useState<any>()
   const [showFacturaAndTransaction, setShowFacturaAndTransaction] = useState<any>({ state: false, title: "", payload: {} })
+  const [showPreviewPdf, setShowPreviewPdf] = useState<any>({ state: false, title: "", payload: {} })
   const [selectRow, setSelectRow] = useState<string | null>(null)
   const [searchColumn, setSearchColumn] = useState<string | null>(null)
   const [search, setSearch] = useState<boolean>(false)
@@ -105,8 +107,8 @@ export default function Home() {
   const [updated, setUpdated] = useState('');
   const [uploading, setUploading] = useState<boolean>(false)
   const [showSpinner, setShowSpinner] = useState<boolean>(false)
-  const [columnVisibility, setColumnVisibility] = React.useState({ cajeroID: false, cajero: false, banco: false, conciliado: false, updatedAt: false })
-
+  const [columnVisibility, setColumnVisibility] = React.useState({ recargado: false, forma_pago: false, cajeroID: false, cajero: false, banco: false, conciliado: false, updatedAt: false })
+  const [tableMaster, setTableMaster] = useState<any>()
 
   const handleChange = (event) => {
     if (event.key === 'Enter') {
@@ -139,7 +141,7 @@ export default function Home() {
         id_factura
       },
     }).then((resp: string) => {
-      console.log(getDataTreeFacturaWispHup(JSON.parse(resp)))
+      console.log(JSON.parse(resp))
 
       setShowFacturaAndTransaction({ state: true, title: "factura", payload: getDataTreeFacturaWispHup(JSON.parse(resp)) })
     })
@@ -170,12 +172,23 @@ export default function Home() {
       sortingFn: fuzzySort,
       enableHiding: false,
     }),
+    columnHelperFactura.accessor('criterio', {
+      header: () => <span>criterio</span>,
+      cell: info => info.getValue(),
+      footer: info => info.column.id,
+      enableColumnFilter: false,
+    }),
+    columnHelperFactura.accessor('recargado', {
+      header: () => <span>recargado</span>,
+      cell: info => <span>{info.getValue() ? "recargado" : null}</span>,
+      footer: info => info.column.id,
+      enableColumnFilter: false,
+    }),
     columnHelperFactura.accessor('forma_pago', {
       header: () => <span>forma_pago</span>,
       cell: info => info.getValue(),
       footer: info => info.column.id,
       enableColumnFilter: false,
-      enableHiding: false,
     }),
     columnHelperFactura.accessor('total_cobrado', {
       header: () => <span>total_cobrado</span>,
@@ -187,13 +200,15 @@ export default function Home() {
       header: () => <span>fecha_pago</span>,
       cell: info => <div className="text-center">{getDate(info.getValue())}</div>,
       footer: info => info.column.id,
-      enableColumnFilter: false
+      enableColumnFilter: false,
+      enableHiding: false,
     }),
     columnHelperFactura.accessor('fecha_pago_ref', {
       header: () => <span>fecha_pago_ref</span>,
       cell: info => <div className="text-center">{info.getValue()}</div>,
       footer: info => info.column.id,
-      enableColumnFilter: false
+      enableColumnFilter: false,
+      enableHiding: false,
     }),
     columnHelperFactura.accessor('referencia', {
       header: () => <span>referencia</span>,
@@ -240,6 +255,14 @@ export default function Home() {
       id: 'referencia',
       header: () => <span>referencia banco</span>,
       cell: info => <div onClick={() => handleGetReferencia(info.getValue())} className="text-end">{info.getValue()}</div>,
+      footer: info => info.column.id,
+      filterFn: 'fuzzy',
+      sortingFn: fuzzySort,
+    }),
+    columnHelperTransaction.accessor('criterio', {
+      id: 'criterio',
+      header: () => <span>criterio</span>,
+      cell: info => <div className="text-center">{info.getValue()}</div>,
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
@@ -318,9 +341,9 @@ export default function Home() {
       },
       enableColumnFilter: false
     }),
-    columnHelperTransaction.accessor('updatedAt', {
-      header: () => <span>updatedAt</span>,
-      cell: info => { return <div className="text-center">{getDateTime(info.getValue())}</div> },
+    columnHelperTransaction.accessor('fecha', {
+      header: () => <span>fecha</span>,
+      cell: info => { return <div className="text-center">{getDateTime(info.getValue()).slice(0, -6)}</div> },
       footer: info => info.column.id,
       enableColumnFilter: false
     }),
@@ -352,11 +375,35 @@ export default function Home() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
   })
+  useEffect(() => {
+    // const visibility = tableMaster?.getVisibleLeafColumns().map(elem => elem.id)
+    // console.log(data, visibility)
+    // // const dataFiltrada = data.results.map((obj) => {
+    // //   const newObj = {};
+    // //   for (const prop in obj) {
+    // //     if (columnVisibility[prop]) {
+    // //       newObj[prop] = obj[prop];
+    // //     }
+    // //   }
+    // //   return newObj;
+    // // });
+
+    // const dataFiltrada = data.map((obj) => {
+    //   const newObj = {};
+    //   for (const prop of visibility) {
+    //     if (obj.hasOwnProperty(prop)) {
+    //       newObj[prop] = obj[prop];
+    //     }
+    //   }
+    //   return newObj;
+    // });
+
+    // console.log(dataFiltrada);
+  }, [data, columnVisibility])
 
   useEffect(() => {
     table?.setPageSize(250)
   }, [])
-
 
   useEffect(() => {
     if (startDateFilter && endDateFilter) {
@@ -458,7 +505,7 @@ export default function Home() {
             diferencia
           }
         })
-        console.log(results[0])
+        console.log(resp)
         setData(results)
       })
     }
@@ -506,8 +553,32 @@ export default function Home() {
     })
   };
 
+  const handleRecargar = (e) => {
+    e.preventDefault();
+    console.log(showFacturaAndTransaction.payload[0].value)
+    // fetchApiJaihom({
+    //       query: queries.runConciliation,
+    //       variables: {},
+    //     }).then((result) => {
+    //       if (result === "ok") {
+    //         setUploading(false)
+    //       }
+    // })
+  };
+
+  const handleRecargarAll = (e) => {
+    e.preventDefault()
+    const ids_factura = data.map(elem => elem.id_factura)
+    fetchApiJaihom({
+      query: queries.refreshFacturaWispHup,
+      variables: { ids_factura },
+    }).then((result) => {
+      console.log(result)
+    })
+  };
+
   return (
-    <div className="flex w-full text-xs">
+    <div className="flex w-full text-xs capitalize">
       {showFacturaAndTransaction.state &&
         <div className="absolute w-full h-[calc(100%-100px)] z-50 justify-center flex">
           {/* <ClickAwayListener onClickAway={() => setShowFacturaWispHup({ state: false })}> */}
@@ -515,6 +586,8 @@ export default function Home() {
             <div className="bg-white flex w-full h-10 rounded-xl rounded-b-none items-center px-2 border-b-[1px] border-gray-300 shadow-sm">
               <div className="flex-1 flex items-center" >
                 <span className="capitalize text-lg font-semibold text-gray-700">{showFacturaAndTransaction.title}</span>
+                <div className="flex-1" />
+                <button onClick={handleRecargar} disabled={uploading} type="button" className={`w-28 h-7 bg-blue-500 hover:bg-blue-400 rounded-lg flex items-center justify-center select-none font-medium text-xs text-white mr-4`}>RECARGAR</button>
               </div>
               <div onClick={() => setShowFacturaAndTransaction(false)} className="bg-gray-50 w-8 h-8 hover:bg-gray-200 rounded-full flex justify-center cursor-pointer text-lg text-gray-700 pt-0">x</div>
             </div>
@@ -524,6 +597,27 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-gray-200 h-2" />
+          </div>
+          {/* </ClickAwayListener> */}
+        </div>
+      }
+
+      {showPreviewPdf.state &&
+        <div className="absolute w-full h-[calc(100%-100px)] z-50 justify-center flex">
+          {/* <ClickAwayListener onClickAway={() => setShowFacturaWispHup({ state: false })}> */}
+          <div className="bg-gray-200 flex flex-col w-[764px] h-[615px] translate-y-[46px] rounded-xl shadow-lg border-[1px] border-gray-300">
+            <div className="bg-white flex w-full h-10 rounded-xl rounded-b-none items-center px-2 border-b-[1px] border-gray-300 shadow-sm">
+              <div className="flex-1 flex items-center" >
+                <span className="capitalize text-lg font-semibold text-gray-700">{showFacturaAndTransaction.title}</span>
+                <div className="flex-1" />
+              </div>
+              <div onClick={() => setShowPreviewPdf(false)} className="bg-gray-50 w-8 h-8 hover:bg-gray-200 rounded-full flex justify-center cursor-pointer text-lg text-gray-700 pt-0">x</div>
+            </div>
+            <div className="w-full h-[555px]">
+              <div className="w-[980px] h-[740px] scale-75 bg-white -translate-x-[109px] -translate-y-[84px] border-[1px] rounded-none ">
+
+              </div>
+            </div>
           </div>
           {/* </ClickAwayListener> */}
         </div>
@@ -556,7 +650,7 @@ export default function Home() {
             <div className="flex-1 flex justify-end py-1">
               <div className="w-72 flex flex-col px-2 pb-1">
                 {/* filtrar por estado de factura */}
-                <div className="border-[1px] border-gray-300 flex-1 rounded-xl inline-flex flex-col px-1 py-2 space-y-2">
+                <div className="border-[1px] border-gray-300 flex-1 rounded-xl inline-flex flex-col px-1 pt-2 pb-1 space-y-1">
                   <div className="space-x-3">
                     <div className="inline-flex items-center space-x-1">
                       <input type="radio" name="type" value="factura" id="factura" onChange={onOptionChangeType} checked={"factura" === typeFilter} />
@@ -580,6 +674,14 @@ export default function Home() {
                       <input type="radio" name="state" value="noConciliated" id="noConciliated" onChange={onOptionChangeState} checked={"noConciliated" === stateFilter} />
                       <label htmlFor="noConciliated">no conciliadas</label>
                     </div>
+                  </div>
+                  <div className="flex items-center flex-1">
+                    <div className="flex-1"></div>
+                    <button
+                      onClick={handleRecargarAll}
+                      disabled={stateFilter !== "noConciliated" || typeFilter !== "factura"}
+                      type="button"
+                      className={`w-28 h-6  ${stateFilter !== "noConciliated" || typeFilter !== "factura" ? "bg-gray-300" : "bg-blue-500"} hover:bg-blue-400 rounded-lg flex items-center justify-center select-none font-medium text-xs text-white`}>RECARGAR</button>
                   </div>
                 </div>
               </div>
@@ -676,7 +778,23 @@ export default function Home() {
                     <img src="https://tramitesenlineabdv.banvenez.com/img/LogoSolo.png" />
                   </label>
                 </div>
-                <GrDocumentPdf onClick={() => toPDF()} className="w-6 h-6 cursor-pointer" />
+                <div onClick={() => generateXLSX({ data, tableMaster })} className="w-6 h-6" >
+                  <label className={`hover:scale-120 transform  flex flex-col items-center justify-center gap-1 cursor-pointer relative`} >
+                    <RiFileExcel2Fill className="w-6 h-6 text-green-700" />
+                  </label>
+                </div>
+                {/* <div onClick={() => setShowPreviewPdf({ state: true })} className="w-6 h-6" >
+                  <label className={`hover:scale-120 transform  flex flex-col items-center justify-center gap-1 cursor-pointer relative`} >
+                    <RiFileExcel2Fill className="w-6 h-6 text-green-700" />
+                  </label>
+                </div> */}
+                <div onClick={() => {
+                  setShowPreviewPdf({ state: true })
+                }} className="w-6 h-6" >
+                  <label className={`hover:scale-120 transform  flex flex-col items-center justify-center gap-1 cursor-pointer relative`} >
+                    <GrDocumentPdf className="w-6 h-6 text-red-700" />
+                  </label>
+                </div>
                 <ClickAwayListener onClickAway={() => setColumnsView(false)}>
                   <div className="relative ">
                     <TbSettingsFilled onClick={() => setColumnsView(!columnsView)} className="w-6 h-6 cursor-pointer" />
@@ -725,6 +843,7 @@ export default function Home() {
                 {table.getHeaderGroups().map(headerGroup => {
                   return (
                     <tr key={headerGroup.id} className="border-b-[1px] border-gray-300">
+                      <TableForward table={table} typeFilter={typeFilter} setTableMaster={setTableMaster} />
                       {headerGroup.headers.map((header, idx) => (
                         <th key={header.id} className={`h-6 ${idx !== 0 && "border-l-[1px] border-gray-300"}`}>
                           {header.isPlaceholder
@@ -779,37 +898,40 @@ export default function Home() {
                 {table.getRowModel().rows.map(row => {
                   return (
                     <tr key={row.id} onClick={() => setSelectRow(row.id === selectRow ? null : row.id)} className={`${row.id === selectRow && "bg-gray-300"} hover:bg-gray-200 select-none`}>
-                      {row.getVisibleCells().map(cell => (
-                        <td className="px-2" key={cell.id}
-                          onClick={(e: any) => {
-                            if (cell.column.id === "transacciones") {
-                              const rootelementOld = document.getElementById("parent")
-                              if (rootelementOld) rootelementOld.removeAttribute("id")
-                              e.target.id = "parent"
-                              const rootelement = document.getElementById("parent")
-                              const child = document.getElementById("child")
-                              // if (rootelement) {
-                              //   rootelement?.appendChild(child)
-                              //   setInputView(true)
-                              //   child.focus()
-                              // }
-                            }
-                          }}
-                          onDoubleClick={(e: any) => {
-                            console.log(e)
-                            const lastElem = document.getElementById("select")
-                            if (lastElem) {
-                              lastElem.style.userSelect = "none"
-                              lastElem.removeAttribute("id")
-                            }
-                            e.target.id = "select"
-                            e.target.style.userSelect = "text"
-                            e.stopPropagation()
-                          }}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map(cell => {
+                        // console.log(122211100, flexRender(cell.column.columnDef.cell, cell.getContext()))
+                        return (
+                          <td className="px-2" key={cell.id}
+                            onClick={(e: any) => {
+                              if (cell.column.id === "transacciones") {
+                                const rootelementOld = document.getElementById("parent")
+                                if (rootelementOld) rootelementOld.removeAttribute("id")
+                                e.target.id = "parent"
+                                const rootelement = document.getElementById("parent")
+                                const child = document.getElementById("child")
+                                // if (rootelement) {
+                                //   rootelement?.appendChild(child)
+                                //   setInputView(true)
+                                //   child.focus()
+                                // }
+                              }
+                            }}
+                            onDoubleClick={(e: any) => {
+                              console.log(e)
+                              const lastElem = document.getElementById("select")
+                              if (lastElem) {
+                                lastElem.style.userSelect = "none"
+                                lastElem.removeAttribute("id")
+                              }
+                              e.target.id = "select"
+                              e.target.style.userSelect = "text"
+                              e.stopPropagation()
+                            }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        )
+                      })}
                     </tr>
                   )
                 })}
@@ -1054,4 +1176,15 @@ function DebouncedInput({ value: initialValue, onChange, debounce = 500, ...prop
   return (
     <input className="text-xs" {...props} value={value} onChange={e => setValue(e.target.value)} />
   )
+}
+
+
+
+const TableForward = ({ table, typeFilter, setTableMaster }) => {
+  useEffect(() => {
+    setTableMaster(table)
+  }, [typeFilter])
+
+
+  return (<></>)
 }

@@ -18,6 +18,7 @@ export interface Transaction {
   descripcion: string
   monto: number
   conciliado: boolean
+  criterio: string
   facturas: Factura[]
   diferencia: number
   monto_facturas: number
@@ -38,7 +39,9 @@ export interface Factura {
   forma_pago: String
   cajeroID: number
   cajero: String
-  pagado: Boolean
+  pagado: boolean
+  recargado: boolean
+  criterio: string
   transacciones: Transaction[]
   monto_facturas: number
   diferencia: number
