@@ -101,8 +101,8 @@ export default function Home() {
   const [stateFilter, setStateFilter] = useState("conciliated")
   const [rangeFilter, setRangeFilter] = useState(null)
   const d = new Date()
-  const [startDateFilter, setStartDateFilter] = useState<Date>(new Date(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-`));
-  const [endDateFilter, setEndDateFilter] = useState<Date>(new Date(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-`));
+  const [startDateFilter, setStartDateFilter] = useState<Date>(new Date(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`));
+  const [endDateFilter, setEndDateFilter] = useState<Date>(new Date(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`));
   const inputRef = useRef(null);
   const [updated, setUpdated] = useState('');
   const [uploading, setUploading] = useState<boolean>(false)
@@ -542,9 +542,62 @@ export default function Home() {
     setShowSpinner(true)
     setUploading(true)
     setFile(file)
+    let args: any = {}
+    if (dateFilter === "lastmonth") {
+      const dt = new Date()
+      const y = dt.getFullYear()
+      const m = dt.getMonth()
+      args = {
+        rangeDate: {
+          gt: new Date(`${y}-${m}-1`),
+          lt: new Date(new Date(`${y}-${m + 1}-1 23:59:59`).getTime() - 86400000),
+        }
+      }
+    }
+    if (dateFilter === "month") {
+      const dt = new Date()
+      const y = dt.getFullYear()
+      const m = dt.getMonth()
+      args = {
+        rangeDate: {
+          gt: new Date(`${y}-${m + 1}-1`),
+          lt: new Date(new Date(`${y}-${m + 2}-1 23:59:59`).getTime() - 86400000),
+        }
+      }
+    }
+    if (dateFilter === "week") {
+      const r = obtenerPrimerYUltimoDiaSemana()
+      args = {
+        rangeDate: {
+          gt: r.primero,
+          lt: r.ultimo,
+        }
+      }
+    }
+    if (dateFilter === "day") {
+      const dt = new Date()
+      const y = dt.getFullYear()
+      const m = dt.getMonth()
+      const d = dt.getDate()
+      args = {
+        rangeDate: {
+          gt: new Date(`${y}-${m + 1}-${d}`),
+          lt: new Date(`${y}-${m + 1}-${d} 23:59:59`),
+        }
+      }
+    }
+    if (rangeFilter && dateFilter === "range") {
+      args = {
+        rangeDate: {
+          gt: new Date(rangeFilter.startDateFilter),
+          lt: new Date(rangeFilter.endDateFilter),
+        }
+      }
+    }
+
     fetchApiJaihom({
       query: queries.runConciliation,
-      variables: {},
+      variables: { rangeDate: args.rangeDate },
     }).then((result) => {
       if (result === "ok") {
         setUploading(false)

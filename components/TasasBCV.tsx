@@ -84,7 +84,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
             <CheckIcon className="w-8 h-8" onClick={createTasa} />
             <div className="flex items-center pl-2 ">
               <input ref={refFecha} type="date" className="w-28 h-6 border text-xs" />
-              <input ref={refTasa} type="number" className="w-16 h-6 ml-4 border font-bold text-sm text-right" />
+              <input ref={refTasa} type="number" className="w-20 h-6 ml-4 border font-bold text-sm text-right" />
             </div>
           </div>
         </li>
@@ -98,7 +98,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
                 <IconUsdSquare className="w-8 h-8 text-gray-600" />
                 <div className="flex items-center pl-2">
                   <span className="w-16 text-xs">{`${getDate(elem?.fecha)}`}</span>
-                  <span className="w-16 font-bold text-sm text-right">{elem?.tasa?.toFixed(2)}</span>
+                  <span className="w-16 font-bold text-sm text-right">{elem?.tasa?.toFixed(4)}</span>
                   <IconDelete className="w-6 h-6 ml-6 cursor-pointer text-gray-600" onClick={() => {
                     !showConfirmation?.value && setShowConfirmation((old: any) => {
                       old.values[idx] = true

@@ -188,9 +188,9 @@ export const queries: queries = {
       createdAt
     }
   }`,
-  runConciliation: `mutation
+  runConciliation: `mutation($rangeDate:rangeDate)
   {
-    runConciliation
+    runConciliation(rangeDate:$rangeDate)
   }`,
   uploadBanco: `mutation($file:Upload!, $banco:String!)
   {

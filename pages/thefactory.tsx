@@ -60,14 +60,14 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div id="root_element" className="*bg-violet-100 w-[50%] h-[400px] flex justify-center">
+        <div id="root_element" className="*bg-violet-100 w-[45%] h-[400px] flex justify-center">
           <div className="w-[80%] h-[400px] border border-gray-300 bg-white rounded-xl mt-10 p-2">
             <span className="font-display text-2xl font-medium">Descargar archivo zip</span>
             <ListFileZip filesZip={filesZip} />
           </div>
         </div>
-        <div className="*bg-violet-100 w-[25%] h-[400px] flex justify-center">
-          <div className="w-[85%] h-[300px] border border-gray-300 bg-white rounded-xl mt-10 p-2">
+        <div className="*bg-violet-100 w-[30%] h-[400px] flex justify-center">
+          <div className="w-full h-[300px] border border-gray-300 bg-white rounded-xl mt-10 p-2">
             <div className="flex">
               <span className="font-display text-lg font-medium">Tasa diaria BCV</span>
               <IconAddCircleLine className="ml-10 w-8 h-8 cursor-pointer text-gray-600" onClick={() => { setAddTasa(!addTasa) }} />
