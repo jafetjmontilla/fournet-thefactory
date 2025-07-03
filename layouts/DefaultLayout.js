@@ -24,6 +24,7 @@ export const DefaultLayout = ({ children }) => {
           <div className="inline-flex space-x-4">
             <ButtonGradient1 caption="Facturas Thefactory" className="algo" onClick={() => router.push("/thefactory")} />
             <ButtonGradient1 caption="Conciliaciones" className="algo" onClick={() => router.push("/conciliator")} />
+            <ButtonGradient1 caption="Retenciones IVA" className="algo" onClick={() => router.push("/retention-iva")} />
           </div>
         </div >
         {children}
