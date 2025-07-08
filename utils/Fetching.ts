@@ -105,6 +105,10 @@ type queries = {
   runConciliation: String
   getFacturaWispHup: String
   refreshFacturaWispHup: string
+  getSupplier: string
+  createSupplier: string
+  updateSupplier: string
+  searchSupplier: string
 };
 
 export const queries: queries = {
@@ -252,5 +256,58 @@ export const queries: queries = {
   resyncOnus: `mutation ( $args:[String] )
   {
     resyncOnus( args:$args )
+  }`,
+  getSupplier: `query($args:inputSupplier, $sort:sortCriteriaSupplier, $skip:Int, $limit:Int){
+    getSupplier(args:$args, sort:$sort, skip:$skip, limit:$limit){
+      total
+      results{
+        _id
+        letterIdentifier
+        numberIdentifier
+        name
+        address
+        phone
+        email
+      }
+    }
+  }`,
+  createSupplier: `mutation($args:[inputSupplier]){
+    createSupplier(args:$args){
+      total
+      results{
+        _id
+        letterIdentifier
+        numberIdentifier
+        name
+        address
+        phone
+        email
+      }
+    }
+  }`,
+  updateSupplier: `mutation($args:inputSupplier){
+    updateSupplier(args:$args){
+      _id
+      letterIdentifier
+      numberIdentifier
+      name
+      address
+      phone
+      email
+    }
+  }`,
+  searchSupplier: `query($text:String){
+    searchSupplier(text:$text){
+      total
+      results{
+        _id
+        letterIdentifier
+        numberIdentifier
+        name
+        address
+        phone
+        email
+      }
+    }
   }`,
 };

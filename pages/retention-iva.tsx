@@ -1,6 +1,8 @@
-import { useState, useRef, RefObject } from "react";
+import { useState, useRef, RefObject, useEffect } from "react";
 import { InputWithLabel } from "../components/InputWithLabel";
 import { IconDelete } from "../icons";
+import { fetchApiJaihom, queries } from "../utils/Fetching";
+import { useToast } from "../components/Toast";
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
@@ -8,37 +10,38 @@ const getToday = () => new Date().toISOString().slice(0, 10);
 const proveedoresGuardados = [
   {
     id: 1,
-    TipoIdentificacion: "J",
-    NumeroIdentificacion: "12345678",
-    RazonSocial: "Proveedor Ejemplo 1",
-    Direccion: "Calle 1",
-    Telefono: "04141234567",
-    Correo: "ejemplo1@mail.com"
+    letterIdentifier: "J",
+    numberIdentifier: 12345678,
+    name: "Proveedor Ejemplo 1",
+    address: "Calle 1",
+    phone: "04141234567",
+    email: "ejemplo1@mail.com"
   },
   {
     id: 2,
-    TipoIdentificacion: "V",
-    NumeroIdentificacion: "87654321",
-    RazonSocial: "Proveedor Ejemplo 2",
-    Direccion: "Calle 2",
-    Telefono: "04147654321",
-    Correo: "ejemplo2@mail.com"
+    letterIdentifier: "V",
+    numberIdentifier: 87654321,
+    name: "Proveedor Ejemplo 2",
+    address: "Calle 2",
+    phone: "04147654321",
+    email: "ejemplo2@mail.com"
   }
 ];
 
 export default function RetentionIVA() {
+  const { showToast, ToastContainer } = useToast();
   const [retencion, setRetencion] = useState({
     Serie: "",
     NumeroDocumento: "",
     FechaEmision: getToday()
   });
   const [proveedor, setProveedor] = useState({
-    TipoIdentificacion: "",
-    NumeroIdentificacion: "",
-    RazonSocial: "",
-    Direccion: "",
-    Telefono: "",
-    Correo: "",
+    letterIdentifier: "",
+    numberIdentifier: "",
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
     TotalBaseImponible: "",
     TotalIVA: "",
     TotalRetenido: ""
@@ -46,10 +49,17 @@ export default function RetentionIVA() {
   const [proveedorId, setProveedorId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef();
+  const debounceRef = useRef<NodeJS.Timeout>();
+
+  // Refs para inputs de proveedor y retención
+  const retencionRefs: RefObject<HTMLInputElement>[] = [useRef(null), useRef(null), useRef(null)];
+  const proveedorRefs: RefObject<HTMLInputElement>[] = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+
   const [facturas, setFacturas] = useState([
     {
-      FechaDocumento: "",
+      FechaDocumento: getToday(),
       SerieDocumento: "",
       NumeroDocumento: "",
       NumeroControl: "",
@@ -65,10 +75,6 @@ export default function RetentionIVA() {
     }
   ]);
 
-  // Refs para inputs de proveedor y retención
-  const retencionRefs: RefObject<HTMLInputElement>[] = [useRef(null), useRef(null), useRef(null)];
-  const proveedorRefs: RefObject<HTMLInputElement>[] = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
-
   // Para facturas: matriz de refs [fila][columna]
   const facturaCampos = [
     'FechaDocumento', 'SerieDocumento', 'NumeroDocumento', 'NumeroControl',
@@ -79,46 +85,160 @@ export default function RetentionIVA() {
     facturaCampos.map(() => useRef<HTMLInputElement>(null))
   );
 
-  // Buscar proveedores por nombre o número de identificación
-  const handleBusqueda = (e) => {
-    const valor = e.target.value;
-    setBusqueda(valor);
+  // Función de búsqueda con debounce
+  const buscarProveedores = async (valor: string) => {
     if (valor.length > 1) {
-      const sugeridos = proveedoresGuardados.filter(p =>
-        p.RazonSocial.toLowerCase().includes(valor.toLowerCase()) ||
-        p.NumeroIdentificacion.includes(valor)
-      );
-      setSugerencias(sugeridos);
+      try {
+        const result = await fetchApiJaihom({
+          query: queries.searchSupplier,
+          variables: {
+            text: valor
+          },
+          type: "json"
+        });
+
+        if (result && result.results) {
+          setSugerencias(result.results);
+        } else {
+          setSugerencias([]);
+        }
+      } catch (error) {
+        console.error("Error buscando proveedores:", error);
+        setSugerencias([]);
+      }
     } else {
       setSugerencias([]);
     }
   };
 
+  // Buscar proveedores por nombre o número de identificación con debounce
+  const handleBusqueda = (e) => {
+    const valor = e.target.value;
+    setBusqueda(valor);
+
+    // Limpiar el timeout anterior
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Crear nuevo timeout para ejecutar la búsqueda después de 500ms de pausa
+    debounceRef.current = setTimeout(() => {
+      buscarProveedores(valor);
+    }, 500);
+  };
+
+  // Limpiar timeout al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   // Seleccionar proveedor de la lista
   const seleccionarProveedor = (p) => {
-    setProveedor({ ...p });
-    setProveedorId(p.id);
+    setProveedor({
+      letterIdentifier: p.letterIdentifier || "",
+      numberIdentifier: p.numberIdentifier?.toString() || "",
+      name: p.name || "",
+      address: p.address || "",
+      phone: p.phone || "",
+      email: p.email || "",
+      TotalBaseImponible: "",
+      TotalIVA: "",
+      TotalRetenido: ""
+    });
+    setProveedorId(p._id);
     setBusqueda("");
     setSugerencias([]);
   };
 
   // Guardar nuevo proveedor
-  const guardarNuevoProveedor = () => {
-    // Aquí iría la lógica para guardar en backend
-    alert("Proveedor guardado (simulado)");
-    setProveedorId(null);
+  const guardarNuevoProveedor = async () => {
+    if (!proveedor.name || !proveedor.letterIdentifier || !proveedor.numberIdentifier) {
+      showToast("Por favor complete los campos obligatorios: Razón Social, Tipo y Número de Identificación", "warning");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await fetchApiJaihom({
+        query: queries.createSupplier,
+        variables: {
+          args: [{
+            letterIdentifier: proveedor.letterIdentifier,
+            numberIdentifier: proveedor.numberIdentifier,
+            name: proveedor.name,
+            address: proveedor.address,
+            phone: proveedor.phone,
+            email: proveedor.email
+          }]
+        },
+        type: "json"
+      });
+
+      if (result && result.results && result.results.length > 0) {
+        const nuevoProveedor = result.results[0];
+        setProveedorId(nuevoProveedor._id);
+        showToast("Proveedor guardado exitosamente", "success");
+      } else {
+        showToast("Error al guardar el proveedor", "error");
+      }
+    } catch (error) {
+      console.error("Error guardando proveedor:", error);
+      showToast("Error al guardar el proveedor", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Guardar cambios en proveedor existente
-  const guardarCambiosProveedor = () => {
-    // Aquí iría la lógica para actualizar en backend
-    alert("Cambios guardados (simulado)");
-  };
+  const guardarCambiosProveedor = async () => {
+    if (!proveedorId) {
+      showToast("No hay un proveedor seleccionado para actualizar", "warning");
+      return;
+    }
 
-  // Aquí puedes agregar funciones para manejar los cambios en los formularios y el envío de datos
+    if (!proveedor.name || !proveedor.letterIdentifier || !proveedor.numberIdentifier) {
+      showToast("Por favor complete los campos obligatorios: Razón Social, Tipo y Número de Identificación", "warning");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await fetchApiJaihom({
+        query: queries.updateSupplier,
+        variables: {
+          args: {
+            _id: proveedorId,
+            letterIdentifier: proveedor.letterIdentifier,
+            numberIdentifier: proveedor.numberIdentifier,
+            name: proveedor.name,
+            address: proveedor.address,
+            phone: proveedor.phone,
+            email: proveedor.email
+          }
+        },
+        type: "json"
+      });
+
+      if (result && result._id) {
+        showToast("Cambios guardados exitosamente", "success");
+      } else {
+        showToast("Error al actualizar el proveedor", "error");
+      }
+    } catch (error) {
+      console.error("Error actualizando proveedor:", error);
+      showToast("Error al actualizar el proveedor", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
+      <ToastContainer />
       <h1 className="text-2xl font-bold mb-6">Retenciones IVA</h1>
       <div className="mb-8 border p-4 rounded bg-gray-50">
         <h2 className="font-semibold mb-2">RETENCIÓN</h2>
@@ -139,29 +259,47 @@ export default function RetentionIVA() {
               onChange={handleBusqueda}
               className="border rounded px-2 py-1 w-full"
               placeholder="Buscar proveedor por nombre o identificación..."
+              disabled={loading}
             />
+            {loading && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              </div>
+            )}
             {sugerencias.length > 0 && (
               <ul className="absolute z-10 bg-white border w-full max-h-40 overflow-y-auto shadow">
                 {sugerencias.map((p) => (
-                  <li key={p.id} className="px-2 py-1 hover:bg-violet-100 cursor-pointer" onClick={() => seleccionarProveedor(p)}>
-                    {p.RazonSocial} ({p.NumeroIdentificacion})
+                  <li key={p._id} className="px-2 py-1 hover:bg-violet-100 cursor-pointer" onClick={() => seleccionarProveedor(p)}>
+                    {p.name} ({p.numberIdentifier})
                   </li>
                 ))}
               </ul>
             )}
           </div>
-          <button className="px-3 py-1 bg-green-600 text-white rounded" onClick={guardarNuevoProveedor}>Guardar nuevo</button>
+          <button
+            className={`px-3 py-1 text-white rounded ${loading ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
+            onClick={guardarNuevoProveedor}
+            disabled={loading}
+          >
+            {loading ? 'Guardando...' : 'Guardar nuevo'}
+          </button>
           {proveedorId && (
-            <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={guardarCambiosProveedor}>Guardar cambios</button>
+            <button
+              className={`px-3 py-1 text-white rounded ${loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+              onClick={guardarCambiosProveedor}
+              disabled={loading}
+            >
+              {loading ? 'Guardando...' : 'Guardar cambios'}
+            </button>
           )}
         </div>
         <div className="grid md:grid-cols-12 gap-2">
-          <InputWithLabel label="Tipo Identificación" value={proveedor.TipoIdentificacion} onChange={e => setProveedor({ ...proveedor, TipoIdentificacion: e.target.value })} colSpan="md:col-span-2" ref={proveedorRefs[0]} onEnterNext={() => proveedorRefs[1].current && proveedorRefs[1].current.focus()} />
-          <InputWithLabel label="Número Identificación" value={proveedor.NumeroIdentificacion} onChange={e => setProveedor({ ...proveedor, NumeroIdentificacion: e.target.value })} colSpan="md:col-span-2" ref={proveedorRefs[1]} onEnterNext={() => proveedorRefs[2].current && proveedorRefs[2].current.focus()} />
-          <InputWithLabel label="Razón Social" value={proveedor.RazonSocial} onChange={e => setProveedor({ ...proveedor, RazonSocial: e.target.value })} colSpan="md:col-span-8" ref={proveedorRefs[2]} onEnterNext={() => proveedorRefs[3].current && proveedorRefs[3].current.focus()} />
-          <InputWithLabel label="Dirección" value={proveedor.Direccion} onChange={e => setProveedor({ ...proveedor, Direccion: e.target.value })} colSpan="md:col-span-12" ref={proveedorRefs[3]} onEnterNext={() => proveedorRefs[4].current && proveedorRefs[4].current.focus()} />
-          <InputWithLabel label="Teléfono" value={proveedor.Telefono} onChange={e => setProveedor({ ...proveedor, Telefono: e.target.value })} colSpan="md:col-span-3" ref={proveedorRefs[4]} onEnterNext={() => proveedorRefs[5].current && proveedorRefs[5].current.focus()} />
-          <InputWithLabel label="Correo" value={proveedor.Correo} onChange={e => setProveedor({ ...proveedor, Correo: e.target.value })} colSpan="md:col-span-5" ref={proveedorRefs[5]} />
+          <InputWithLabel label="Tipo Identificación" value={proveedor.letterIdentifier} onChange={e => setProveedor({ ...proveedor, letterIdentifier: e.target.value })} colSpan="md:col-span-2" ref={proveedorRefs[0]} onEnterNext={() => proveedorRefs[1].current && proveedorRefs[1].current.focus()} />
+          <InputWithLabel label="Número Identificación" value={proveedor.numberIdentifier} onChange={e => setProveedor({ ...proveedor, numberIdentifier: e.target.value })} colSpan="md:col-span-2" ref={proveedorRefs[1]} onEnterNext={() => proveedorRefs[2].current && proveedorRefs[2].current.focus()} />
+          <InputWithLabel label="Razón Social" value={proveedor.name} onChange={e => setProveedor({ ...proveedor, name: e.target.value })} colSpan="md:col-span-8" ref={proveedorRefs[2]} onEnterNext={() => proveedorRefs[3].current && proveedorRefs[3].current.focus()} />
+          <InputWithLabel label="Dirección" value={proveedor.address} onChange={e => setProveedor({ ...proveedor, address: e.target.value })} colSpan="md:col-span-12" ref={proveedorRefs[3]} onEnterNext={() => proveedorRefs[4].current && proveedorRefs[4].current.focus()} />
+          <InputWithLabel label="Teléfono" value={proveedor.phone} onChange={e => setProveedor({ ...proveedor, phone: e.target.value })} colSpan="md:col-span-3" ref={proveedorRefs[4]} onEnterNext={() => proveedorRefs[5].current && proveedorRefs[5].current.focus()} />
+          <InputWithLabel label="Correo" value={proveedor.email} onChange={e => setProveedor({ ...proveedor, email: e.target.value })} colSpan="md:col-span-5" ref={proveedorRefs[5]} />
         </div>
       </div>
       <div className="mb-8 border p-4 rounded bg-gray-50">
@@ -214,7 +352,24 @@ export default function RetentionIVA() {
             })}
           </tbody>
         </table>
-        <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setFacturas([...facturas, { FechaDocumento: "", SerieDocumento: "", NumeroDocumento: "", NumeroControl: "", MontoTotal: "", MontoExento: "", BaseImponible: "", PorcentajeIVA: "", MontoIVA: "", Retenido: "", Porcentaje: "", RetenidoIVA: "", Percibido: "" }])}>Agregar Factura</button>
+        <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setFacturas([
+          ...facturas,
+          {
+            FechaDocumento: getToday(),
+            SerieDocumento: "",
+            NumeroDocumento: "",
+            NumeroControl: "",
+            MontoTotal: "",
+            MontoExento: "",
+            BaseImponible: "",
+            PorcentajeIVA: "",
+            MontoIVA: "",
+            Retenido: "",
+            Porcentaje: "",
+            RetenidoIVA: "",
+            Percibido: ""
+          }
+        ])}>Agregar Factura</button>
       </div>
       <button className="px-6 py-2 bg-green-600 text-white rounded">Guardar</button>
     </div>
