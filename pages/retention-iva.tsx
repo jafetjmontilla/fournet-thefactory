@@ -66,7 +66,7 @@ export default function RetentionIVA() {
       MontoTotal: "",
       MontoExento: "",
       BaseImponible: "",
-      PorcentajeIVA: "",
+      PorcentajeIVA: "16", // Valor constante
       MontoIVA: "",
       Retenido: "",
       Porcentaje: "",
@@ -74,6 +74,27 @@ export default function RetentionIVA() {
       Percibido: ""
     }
   ]);
+
+  // Función para calcular automáticamente los montos
+  const calcularMontos = (factura, index) => {
+    const baseImponible = parseFloat(factura.BaseImponible) || 0;
+    const porcentajeRetencion = parseFloat(factura.Porcentaje) || 0;
+
+    // Calcular Monto IVA (Base Imponible * 16%)
+    const montoIVA = baseImponible * 0.16;
+
+    // Calcular Monto Retenido (Monto IVA * % Retención)
+    const montoRetenido = montoIVA * (porcentajeRetencion / 100);
+
+    const facturasActualizadas = [...facturas];
+    facturasActualizadas[index] = {
+      ...factura,
+      MontoIVA: montoIVA.toFixed(2),
+      Retenido: montoRetenido.toFixed(2)
+    };
+
+    setFacturas(facturasActualizadas);
+  };
 
   // Para facturas: matriz de refs [fila][columna]
   const facturaCampos = [
@@ -339,11 +360,23 @@ export default function RetentionIVA() {
                   <td><InputWithLabel value={factura.NumeroControl} onChange={e => { const f = [...facturas]; f[idx].NumeroControl = e.target.value; setFacturas(f); }} className={`${textSize} ${wNo}`} /></td>
                   <td><InputWithLabel value={factura.MontoTotal} onChange={e => { const f = [...facturas]; f[idx].MontoTotal = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
                   <td><InputWithLabel value={factura.MontoExento} onChange={e => { const f = [...facturas]; f[idx].MontoExento = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.BaseImponible} onChange={e => { const f = [...facturas]; f[idx].BaseImponible = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.PorcentajeIVA} onChange={e => { const f = [...facturas]; f[idx].PorcentajeIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td>
-                  <td><InputWithLabel value={factura.MontoIVA} onChange={e => { const f = [...facturas]; f[idx].MontoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.Retenido} onChange={e => { const f = [...facturas]; f[idx].Retenido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.Porcentaje} onChange={e => { const f = [...facturas]; f[idx].Porcentaje = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td>
+                  <td><InputWithLabel value={factura.BaseImponible} onChange={e => {
+                    const f = [...facturas];
+                    f[idx].BaseImponible = e.target.value;
+                    setFacturas(f);
+                    // Calcular montos automáticamente cuando cambia la base imponible
+                    setTimeout(() => calcularMontos(f[idx], idx), 0);
+                  }} className={`${textSize} ${wMonto}`} /></td>
+                  <td><InputWithLabel value={factura.PorcentajeIVA} disabled={true} className={`${textSize} ${wPorcentaje} bg-gray-100`} /></td>
+                  <td><InputWithLabel value={factura.MontoIVA} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
+                  <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
+                  <td><InputWithLabel value={factura.Porcentaje} onChange={e => {
+                    const f = [...facturas];
+                    f[idx].Porcentaje = e.target.value;
+                    setFacturas(f);
+                    // Calcular montos automáticamente cuando cambia el porcentaje de retención
+                    setTimeout(() => calcularMontos(f[idx], idx), 0);
+                  }} className={`${textSize} ${wPorcentaje}`} /></td>
                   <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td>
                   <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
                   <td className="w-full h-8 flex justify-center items-center"><IconDelete className="w-4 h-4 text-gray-700 cursor-pointer hover:text-gray-800" onClick={() => { const f = [...facturas]; f.splice(idx, 1); setFacturas(f); }} /></td>
@@ -362,7 +395,7 @@ export default function RetentionIVA() {
             MontoTotal: "",
             MontoExento: "",
             BaseImponible: "",
-            PorcentajeIVA: "",
+            PorcentajeIVA: "16", // Valor constante
             MontoIVA: "",
             Retenido: "",
             Porcentaje: "",
