@@ -1,4 +1,4 @@
-import { useState, useRef, RefObject, useEffect } from "react";
+import { useState, useRef, RefObject, useEffect, useMemo, createRef } from "react";
 import { InputWithLabel } from "../components/InputWithLabel";
 import { IconDelete } from "../icons";
 import { fetchApiJaihom, queries } from "../utils/Fetching";
@@ -75,6 +75,21 @@ export default function RetentionIVA() {
     }
   ]);
 
+  // Para facturas: matriz de refs [fila][columna]
+  const facturaCampos = [
+    'FechaDocumento', 'SerieDocumento', 'NumeroDocumento', 'NumeroControl',
+    'MontoTotal', 'MontoExento', 'BaseImponible', 'PorcentajeIVA',
+    'MontoIVA', 'Retenido', 'Porcentaje', 'RetenidoIVA', 'Percibido'
+  ];
+
+  // Crear refs de manera estática - máximo 10 facturas para evitar problemas
+  const maxFacturas = 10;
+  const facturaRefs = useMemo(() => {
+    return Array.from({ length: maxFacturas }, () =>
+      Array.from({ length: facturaCampos.length }, () => createRef<HTMLInputElement>())
+    );
+  }, []);
+
   // Función para calcular automáticamente los montos
   const calcularMontos = (factura, index) => {
     const baseImponible = parseFloat(factura.BaseImponible) || 0;
@@ -96,19 +111,9 @@ export default function RetentionIVA() {
     setFacturas(facturasActualizadas);
   };
 
-  // Para facturas: matriz de refs [fila][columna]
-  const facturaCampos = [
-    'FechaDocumento', 'SerieDocumento', 'NumeroDocumento', 'NumeroControl',
-    'MontoTotal', 'MontoExento', 'BaseImponible', 'PorcentajeIVA',
-    'MontoIVA', 'Retenido', 'Porcentaje', 'RetenidoIVA', 'Percibido'
-  ];
-  const facturaRefs = facturas.map((_, rowIdx) =>
-    facturaCampos.map(() => useRef<HTMLInputElement>(null))
-  );
-
   // Función de búsqueda con debounce
   const buscarProveedores = async (valor: string) => {
-    if (valor.length > 1) {
+    if (valor.length) {
       try {
         const result = await fetchApiJaihom({
           query: queries.searchSupplier,
@@ -506,8 +511,8 @@ export default function RetentionIVA() {
               <th>Base Imponible</th>
               <th>% IVA</th>
               <th>Monto IVA</th>
-              <th>Monto Ret</th>
               <th>% Ret</th>
+              <th>Monto Ret</th>
               {/* <th>Ret IVA</th> */}
               {/* <th>Percibido</th> */}
               <th></th>
@@ -538,7 +543,6 @@ export default function RetentionIVA() {
                   }} className={`${textSize} ${wMonto}`} /></td>
                   <td><InputWithLabel value={factura.PorcentajeIVA} disabled={true} className={`${textSize} ${wPorcentaje} bg-gray-100`} /></td>
                   <td><InputWithLabel value={factura.MontoIVA} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
-                  <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
                   <td><InputWithLabel value={factura.Porcentaje} onChange={e => {
                     const f = [...facturas];
                     f[idx].Porcentaje = e.target.value;
@@ -546,6 +550,7 @@ export default function RetentionIVA() {
                     // Calcular montos automáticamente cuando cambia el porcentaje de retención
                     setTimeout(() => calcularMontos(f[idx], idx), 0);
                   }} className={`${textSize} ${wPorcentaje}`} /></td>
+                  <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
                   {/* <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td> */}
                   {/* <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td> */}
                   <td className="w-full h-8 flex justify-center items-center"><IconDelete className="w-4 h-4 text-gray-700 cursor-pointer hover:text-gray-800" onClick={() => { const f = [...facturas]; f.splice(idx, 1); setFacturas(f); }} /></td>
