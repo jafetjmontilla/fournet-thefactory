@@ -10,6 +10,27 @@ export interface FetchTransaction extends Fectching {
   results: Transaction[]
 }
 
+export interface FetchPaymentReportResults extends Fectching {
+  results: PaymentReportResult[]
+}
+
+export type PaymentReportEstado = "procesado" | "no procesado"
+
+export interface PaymentReportResult {
+  id_factura: string
+  estado: PaymentReportEstado
+  total_cobrado: number
+  accion: number
+  messages: string[]
+  referencia: string
+  fecha_pago: string
+  saldo: number
+  total: number
+  forma_pago: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface Transaction {
   _id: string
   banco: string

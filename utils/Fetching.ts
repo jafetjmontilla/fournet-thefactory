@@ -101,6 +101,7 @@ type queries = {
   resyncOnus: string
   getFacturas: string
   getTransacciones: string
+  getPaymentReportResults: string
   uploadBanco: String
   runConciliation: String
   getFacturaWispHup: String
@@ -117,6 +118,25 @@ export const queries: queries = {
   }`,
   getFacturaWispHup: `query($id_factura:String ){
     getFacturaWispHup(id_factura:$id_factura)
+  }`,
+  getPaymentReportResults: `query($args:inputPaymentReportResults, $sort:sortCriteriaPaymentReportResults, $skip:Int, $limit:Int ){
+    getPaymentReportResults(args:$args, sort:$sort, skip:$skip, limit:$limit){
+      total
+      results{
+        id_factura
+        estado
+        total_cobrado
+        accion
+        messages
+        referencia
+        fecha_pago
+        saldo
+        total
+        forma_pago
+        createdAt
+        updatedAt
+      }
+    }
   }`,
   getTransacciones: `query($args:inputTransaccion,  $sort:sortCriteriaTransaccion, $skip:Int, $limit:Int ){
     getTransacciones(args:$args, sort:$sort, skip:$skip, limit:$limit){

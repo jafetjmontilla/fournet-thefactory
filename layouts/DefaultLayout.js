@@ -25,6 +25,7 @@ export const DefaultLayout = ({ children }) => {
             <ButtonGradient1 caption="Facturas Thefactory" className="algo" onClick={() => router.push("/thefactory")} />
             <ButtonGradient1 caption="Conciliaciones" className="algo" onClick={() => router.push("/conciliator")} />
             <ButtonGradient1 caption="Retenciones IVA" className="algo" onClick={() => router.push("/retention-iva")} />
+            <ButtonGradient1 caption="Pagos Reportados" className="algo" onClick={() => router.push("/payments-reports")} />
           </div>
         </div >
         {children}
