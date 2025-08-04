@@ -27,6 +27,7 @@ export interface PaymentReportResult {
   saldo: number
   total: number
   forma_pago: number
+  telefono: string
   createdAt: Date
   updatedAt: Date
 }

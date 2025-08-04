@@ -102,6 +102,7 @@ type queries = {
   getFacturas: string
   getTransacciones: string
   getPaymentReportResults: string
+  reloadInvoice: string
   uploadBanco: String
   runConciliation: String
   getFacturaWispHup: String
@@ -133,9 +134,26 @@ export const queries: queries = {
         saldo
         total
         forma_pago
+        telefono
         createdAt
         updatedAt
       }
+    }
+  }`,
+  reloadInvoice: `query($id_factura:String ){
+    reloadInvoice(id_factura:$id_factura){
+      id_factura
+      estado
+      total_cobrado
+      accion
+      messages
+      referencia
+      fecha_pago
+      saldo
+      total
+      forma_pago
+      createdAt
+      updatedAt
     }
   }`,
   getTransacciones: `query($args:inputTransaccion,  $sort:sortCriteriaTransaccion, $skip:Int, $limit:Int ){

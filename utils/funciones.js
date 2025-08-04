@@ -61,7 +61,7 @@ export const getDataTreeFacturaWispHup = (facturaWispHup) => {
   return getTreeArr(f)
 }
 
-export const generateXLSX = ({ tableMaster, data }) => {
+export const generateXLSX = ({ tableMaster, data, filename = 'conciliacion' }) => {
   try {
     const visibility = tableMaster?.getVisibleLeafColumns().map(elem => elem.id)
     const dataFiltrada = data.map((obj) => {
@@ -93,7 +93,7 @@ export const generateXLSX = ({ tableMaster, data }) => {
     utils.book_append_sheet(wb, ws, 'Sheet1');
     console.log(wb)
     // Genera un blob con el archivo XLSX
-    writeFile(wb, 'conciliacion.xlsx', { bookType: 'xlsx', type: 'array' })
+    writeFile(wb, `${filename}.xlsx`, { bookType: 'xlsx', type: 'array' })
 
   } catch (error) {
     console.log(error)

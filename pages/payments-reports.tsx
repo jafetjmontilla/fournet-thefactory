@@ -1,9 +1,10 @@
 "use client"
 import { RiFileExcel2Fill } from "react-icons/ri";
+import { SlOptions } from "react-icons/sl";
 import { IoReceiptOutline } from "react-icons/io5";
 import { FiPackage, FiPrinter } from "react-icons/fi";
 import { GrDocumentPdf } from "react-icons/gr";
-import { TbSettingsFilled } from "react-icons/tb";
+import { TbSettingsFilled, TbExternalLink, TbReload, TbPhone } from "react-icons/tb";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { TiArrowSortedDown } from "react-icons/ti";
 import { TiArrowSortedUp } from "react-icons/ti";
@@ -116,7 +117,7 @@ export default function PaymentsReports() {
   )
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const [estadoFilter, setEstadoFilter] = useState<"all" | "procesado" | "no procesado">("all")
+  const [estadoFilter, setEstadoFilter] = useState<"all" | "procesado" | "no procesado">("no procesado")
   const [dateFilter, setDateFilter] = useState("month")
   const [rangeFilter, setRangeFilter] = useState(null)
   const d = new Date()
@@ -128,7 +129,7 @@ export default function PaymentsReports() {
   const [columnVisibility, setColumnVisibility] = React.useState({
     id_factura: true,
     estado: true,
-    total_cobrado: false,
+    total_cobrado: true,
     accion: false,
     messages: false,
     referencia: true,
@@ -136,26 +137,71 @@ export default function PaymentsReports() {
     saldo: true,
     total: true,
     forma_pago: true,
+    telefono: false,
     createdAt: true,
-    updatedAt: false
+    updatedAt: false,
+    acciones: true
   })
   const [tableMaster, setTableMaster] = useState<any>()
 
   const handleChange = (event) => {
     if (event.key === 'Enter') {
-      console.log(inputRef.current.ref)
       setUpdated(inputRef.current.value);
     }
   };
 
   const onOptionChangeEstado: ChangeEventHandler<HTMLInputElement> = (e) => {
-    console.log(e.target.value)
     setEstadoFilter(e.target.value as "all" | "procesado" | "no procesado")
   }
 
   const onOptionChangeDate: ChangeEventHandler<HTMLInputElement> = (e) => {
-    console.log(e.target.value)
     setDateFilter(e.target.value)
+  }
+
+  const handleReloadInvoice = async (id_factura: string, rowIndex: number) => {
+    try {
+      const result = await fetchApiJaihom({
+        query: queries.reloadInvoice,
+        variables: { id_factura },
+      })
+
+      if (result && result.estado === "procesado") {
+        // Actualizar la fila completa con la respuesta
+        setData(prevData => {
+          const newData = [...prevData]
+          newData[rowIndex] = result
+          return newData
+        })
+      }
+    } catch (error) {
+      console.error('Error al recargar factura:', error)
+    }
+  }
+
+  const handleCopyPhone = async (telefono: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(telefono)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = telefono
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        try {
+          document.execCommand('copy')
+        } catch (fallbackError) {
+          console.error('Error en fallback de copia:', fallbackError)
+        } finally {
+          document.body.removeChild(textArea)
+        }
+      }
+    } catch (error) {
+      console.error('Error al copiar teléfono:', error)
+    }
   }
 
   const columnsPaymentReport = useMemo<ColumnDef<PaymentReportResult>[]>(() => [
@@ -174,6 +220,7 @@ export default function PaymentsReports() {
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
+      enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('total_cobrado', {
       header: () => <span>Total Cobrado</span>,
@@ -182,6 +229,8 @@ export default function PaymentsReports() {
         return <div className="text-right">{value ? value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</div>
       },
       footer: info => info.column.id,
+      filterFn: 'fuzzy',
+      sortingFn: fuzzySort,
       enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('accion', {
@@ -218,6 +267,7 @@ export default function PaymentsReports() {
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
+      enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('fecha_pago', {
       header: () => <span>Fecha Pago</span>,
@@ -236,6 +286,7 @@ export default function PaymentsReports() {
         return <div className="text-right">{value ? value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</div>
       },
       footer: info => info.column.id,
+      enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('total', {
       header: () => <span>Total</span>,
@@ -244,6 +295,7 @@ export default function PaymentsReports() {
         return <div className="text-right">{value ? value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</div>
       },
       footer: info => info.column.id,
+      enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('forma_pago', {
       header: () => <span>Forma Pago</span>,
@@ -253,6 +305,18 @@ export default function PaymentsReports() {
         return <div className="text-center">{getFormaPagoNombre(value)}</div>
       },
       footer: info => info.column.id,
+      enableHiding: false,
+    }),
+    columnHelperPaymentReport.accessor('telefono', {
+      header: () => <span>Teléfono</span>,
+      cell: info => {
+        const value = info.getValue()
+        return <div className="text-center">{value || '-'}</div>
+      },
+      footer: info => info.column.id,
+      filterFn: 'fuzzy',
+      sortingFn: fuzzySort,
+      //enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('createdAt', {
       header: () => <span>Creado</span>,
@@ -262,6 +326,7 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableColumnFilter: false,
+      enableHiding: false,
     }),
     columnHelperPaymentReport.accessor('updatedAt', {
       header: () => <span>Actualizado</span>,
@@ -271,6 +336,54 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableColumnFilter: false,
+    }),
+    columnHelperPaymentReport.display({
+      id: 'acciones',
+      header: () => (
+        <div className="flex justify-center">
+          <SlOptions className="w-4 h-4" />
+        </div>
+      ),
+      cell: info => {
+        const row = info.row.original
+        const hasPhone = row.telefono && row.telefono.trim() !== ''
+        return (
+          <div className="flex justify-center items-center space-x-2 w-20">
+            <button
+              onClick={() => hasPhone && handleCopyPhone(row.telefono)}
+              className={`${hasPhone ? 'text-purple-600 hover:text-purple-800 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+              title={hasPhone ? "Copiar teléfono al portapapeles" : "No hay teléfono disponible"}
+              disabled={!hasPhone}
+            >
+              <TbPhone className="w-4 h-4" />
+            </button>
+            {row.estado === "no procesado" && (
+              <>
+                <a
+                  href={`https://wisphub.io/registrar/pago/4fournet/${row.id_factura}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                  title="Ver factura en WispHub"
+                >
+                  <TbExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => handleReloadInvoice(row.id_factura, info.row.index)}
+                  className="text-green-600 hover:text-green-800 cursor-pointer"
+                  title="Recargar factura"
+                >
+                  <TbReload className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        )
+      },
+      enableColumnFilter: false,
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
     }),
   ], [])
 
@@ -379,7 +492,6 @@ export default function PaymentsReports() {
         limit: 0
       },
     }).then((resp: FetchPaymentReportResults) => {
-      console.log(resp)
       setData(resp?.results || [])
     })
   }, [estadoFilter, dateFilter, rangeFilter])
@@ -496,7 +608,7 @@ export default function PaymentsReports() {
             </div>
             <div className="h-10 py-1 space-y-4 text-gray-600 items-center justify-center">
               <div className="space-x-3 flex px-2">
-                <div onClick={() => generateXLSX({ data, tableMaster })} className="w-6 h-6" >
+                <div onClick={() => generateXLSX({ data, tableMaster, filename: 'reportes-de-pagos' })} className="w-6 h-6" >
                   <label className={`hover:scale-120 transform  flex flex-col items-center justify-center gap-1 cursor-pointer relative`} >
                     <RiFileExcel2Fill className="w-6 h-6 text-green-700" />
                   </label>
@@ -512,8 +624,8 @@ export default function PaymentsReports() {
                   <div className="relative ">
                     <TbSettingsFilled onClick={() => setColumnsView(!columnsView)} className="w-6 h-6 cursor-pointer" />
                     <div className="bg-gray-200 shadow-lg rounded-xl absolute -translate-x-[132px] translate-y-2" >
-                      {columnsView && <div className="bg-white w-36 h-64 m-2 inline-block border border-black shadow rounded space-y-1">
-                        <div className="px-1 border-b border-black">
+                      {columnsView && <div className="bg-white w-48  m-2 inline-block border border-black shadow rounded space-y-1 overflow-y-auto">
+                        <div className="px-1 border-b border-black sticky top-0 bg-white">
                           <label>
                             <input
                               {...{
@@ -527,8 +639,8 @@ export default function PaymentsReports() {
                         </div>
                         {table.getAllLeafColumns().map(column => {
                           return (
-                            <div key={column.id} className="px-1">
-                              <label>
+                            <div key={column.id} className="px-1 py-1">
+                              <label className="text-xs">
                                 <input
                                   {...{
                                     type: 'checkbox',
