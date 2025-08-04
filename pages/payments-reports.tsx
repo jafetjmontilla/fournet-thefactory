@@ -31,6 +31,14 @@ import { PaymentReportResult, FetchPaymentReportResults } from "../interfaces";
 
 const formasPagoReport = [
   {
+    "id": 37515,
+    "nombre": "TRANSFERENCIA PORTAL PAGO"
+  },
+  {
+    "id": 27709,
+    "nombre": "ZELLE"
+  },
+  {
     "id": 37407,
     "nombre": "BOTON DE PAGO BDV"
   },
