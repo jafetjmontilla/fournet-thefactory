@@ -31,29 +31,21 @@ import { PaymentReportResult, FetchPaymentReportResults } from "../interfaces";
 
 const formasPagoReport = [
   {
-    "id": 37515,
-    "nombre": "TRANSFERENCIA PORTAL PAGO"
-  },
-  {
-    "id": 27709,
-    "nombre": "ZELLE"
-  },
-  {
     "id": 37407,
     "nombre": "BOTON DE PAGO BDV"
   },
   {
-    "id": 27709,
-    "nombre": "ZELLE"
+    "id": 37524,
+    "nombre": "PAGO MOVIL PORTAL DEL PAGO"
   },
   {
-    "id": 27698,
-    "nombre": "BINANCE"
+    "id": 37515,
+    "nombre": "TRANSFERENCIA PORTAL PAGO"
   },
   {
-    "id": 27702,
-    "nombre": "Pago Movil ( Bs)"
-  }
+    "id": 37516,
+    "nombre": "SELLE PORTAL PAGO"
+  },
 ]
 
 const getFormaPagoNombre = (id: number): string => {
@@ -139,7 +131,7 @@ export default function PaymentsReports() {
     estado: true,
     total_cobrado: true,
     accion: false,
-    messages: false,
+    messages: true,
     referencia: true,
     fecha_pago: false,
     saldo: true,
@@ -221,6 +213,7 @@ export default function PaymentsReports() {
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('estado', {
       header: () => <span>Estado</span>,
@@ -229,6 +222,7 @@ export default function PaymentsReports() {
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('total_cobrado', {
       header: () => <span>Total Cobrado</span>,
@@ -240,6 +234,7 @@ export default function PaymentsReports() {
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('accion', {
       header: () => <span>Acción</span>,
@@ -248,6 +243,7 @@ export default function PaymentsReports() {
         return <div className="text-center">{value || '-'}</div>
       },
       footer: info => info.column.id,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('messages', {
       header: () => <span>Mensajes</span>,
@@ -256,7 +252,7 @@ export default function PaymentsReports() {
           return (
             <div className="w-full flex flex-wrap space-x-2 justify-start">
               {info.getValue().map((message, idx) =>
-                <span key={idx} className="text-xs bg-gray-100 px-1 rounded">
+                <span key={idx} className="text-xs bg-gray-100 px-1 rounded py-1">
                   {message}
                 </span>)}
             </div>
@@ -264,7 +260,8 @@ export default function PaymentsReports() {
         }
       },
       footer: info => info.column.id,
-      enableColumnFilter: false
+      enableColumnFilter: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('referencia', {
       header: () => <span>Referencia</span>,
@@ -276,6 +273,7 @@ export default function PaymentsReports() {
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('fecha_pago', {
       header: () => <span>Fecha Pago</span>,
@@ -286,6 +284,7 @@ export default function PaymentsReports() {
       footer: info => info.column.id,
       enableColumnFilter: false,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('saldo', {
       header: () => <span>Saldo</span>,
@@ -295,6 +294,7 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('total', {
       header: () => <span>Total</span>,
@@ -304,6 +304,7 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('forma_pago', {
       header: () => <span>Forma Pago</span>,
@@ -314,6 +315,7 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('telefono', {
       header: () => <span>Teléfono</span>,
@@ -324,7 +326,8 @@ export default function PaymentsReports() {
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,
-      //enableHiding: false,
+      enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('createdAt', {
       header: () => <span>Creado</span>,
@@ -335,6 +338,7 @@ export default function PaymentsReports() {
       footer: info => info.column.id,
       enableColumnFilter: false,
       enableHiding: false,
+      size: 120,
     }),
     columnHelperPaymentReport.accessor('updatedAt', {
       header: () => <span>Actualizado</span>,
@@ -344,6 +348,7 @@ export default function PaymentsReports() {
       },
       footer: info => info.column.id,
       enableColumnFilter: false,
+      size: 120,
     }),
     columnHelperPaymentReport.display({
       id: 'acciones',
@@ -538,7 +543,7 @@ export default function PaymentsReports() {
         </div>
       }
       <input id="child" type="number" onKeyDown={handleChange} className={`${!inputView && "hidden"} h-4 text-right text-xs font-medium`} />
-      <div className="w-full h-[calc(100vh-120px)] overflow-auto">
+      <div className="w-full h-[calc(100vh-120px)]">
         <div className="bg-white flex flex-col w-[calc(1280px-40px)] xl:w-[calc(100%-64px)] h-[calc(100vh-160px)] border border-gray-300 rounded-xl mt-10 p-2 mx-2 xl:ml-8">
           <div className="flex space-x-4">
             <div className="inline-flex items-center space-x-3">
@@ -632,7 +637,7 @@ export default function PaymentsReports() {
                   <div className="relative ">
                     <TbSettingsFilled onClick={() => setColumnsView(!columnsView)} className="w-6 h-6 cursor-pointer" />
                     <div className="bg-gray-200 shadow-lg rounded-xl absolute -translate-x-[132px] translate-y-2" >
-                      {columnsView && <div className="bg-white w-48  m-2 inline-block border border-black shadow rounded space-y-1 overflow-y-auto">
+                      {columnsView && <div className="bg-white w-48  m-2 inline-block border border-black shadow rounded space-y-1">
                         <div className="px-1 border-b border-black sticky top-0 bg-white">
                           <label>
                             <input
@@ -676,7 +681,11 @@ export default function PaymentsReports() {
                     <tr key={headerGroup.id} className="border-b-[1px] border-gray-300">
                       <TableForward table={table} setTableMaster={setTableMaster} />
                       {headerGroup.headers.map((header, idx) => (
-                        <th key={header.id} className={`h-6 ${idx !== 0 && "border-l-[1px] border-gray-300"}`}>
+                        <th
+                          key={header.id}
+                          // colSpan={header.colSpan}
+                          // style={{ width: `${header.getSize()}px` }}
+                          className={`h-6 ${idx !== 0 && "border-l-[1px] border-gray-300"}`}>
                           {header.isPlaceholder
                             ? null
                             : (<div className="space-y-1 flex flex-col justify-start h-full">
@@ -718,7 +727,8 @@ export default function PaymentsReports() {
                             </div>
                             )}
                         </th>
-                      ))}
+                      )
+                      )}
                     </tr>
                   )
                 })}
@@ -726,7 +736,7 @@ export default function PaymentsReports() {
               <tbody className="block overflow-y-scroll w-[calc(100%+8px)] h-[calc(100vh-340px)]">
                 {table.getRowModel().rows.map(row => {
                   return (
-                    <tr key={row.id} onClick={() => setSelectRow(row.id === selectRow ? null : row.id)} className={`${row.id === selectRow && "bg-gray-300"} hover:bg-gray-200 select-none`}>
+                    <tr key={row.id} onClick={() => setSelectRow(row.id === selectRow ? null : row.id)} className={`${row.id === selectRow && "bg-gray-300"} hover:bg-gray-200 select-none border-b-[1px] border-gray-300`}>
                       {row.getVisibleCells().map(cell => {
                         return (
                           <td className="px-2" key={cell.id}
@@ -848,7 +858,7 @@ export default function PaymentsReports() {
         font-weight: normal;
       }
 
-      table *tbody {
+      table tbody {
         display: block;
         max-height: calc(100vh - 340px);
         width: calc(100% + 8px);
