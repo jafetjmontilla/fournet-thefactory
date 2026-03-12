@@ -95,7 +95,7 @@ type queries = {
   fileUpload: string
   getUploadFiles: string
   createTasaBCV: String
-  getTasaBCV: String
+  getTasasBCV: String
   deleteTasaBCV: String
   getLog: string
   resyncOnus: string
@@ -125,6 +125,7 @@ export const queries: queries = {
       total
       results{
         id_factura
+        cedula
         estado
         total_cobrado
         accion
@@ -143,6 +144,7 @@ export const queries: queries = {
   reloadInvoice: `query($id_factura:String ){
     reloadInvoice(id_factura:$id_factura){
       id_factura
+      cedula
       estado
       total_cobrado
       accion
@@ -259,16 +261,13 @@ export const queries: queries = {
       createdAt
     }
   }`,
-  getTasaBCV: `query ($sort:sortCriteriaTasaBCV, $skip:Int, $limit:Int )
+  getTasasBCV: `query ($sort:sortCriteriaTasaBCV, $skip:Int, $limit:Int )
   {
-    getTasaBCV(skip:$skip, limit:$limit, sort:$sort ){
-      total
-      results{
-        _id
-        tasa
-        fecha
-        createdAt
-      }
+    getTasasBCV(skip:$skip, limit:$limit, sort:$sort ){
+      _id
+      tasa
+      fecha
+      createdAt
     }
   }`,
   deleteTasaBCV: `mutation ($_id:ID )

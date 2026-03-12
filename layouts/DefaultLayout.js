@@ -19,7 +19,7 @@ export const DefaultLayout = ({ children }) => {
         <SectionSwiper /> */}
         <div className="w-full h-[130px] md:h-[100px] flex justify-center md:justify-start space-x-10 items-end">
           <div className="">
-            <Image width={"280"} height={"100"} className="mt-6 ml-0 md:ml-10" alt="4net" src="http://96.126.110.203:4500/outFiles/4netLogo.png" />
+            <Image width={"280"} height={"100"} className="mt-6 ml-0 md:ml-10" alt="4net" src="https://api.bodasdehoy.com/outFiles/4netLogo.png" />
           </div>
           <div className="inline-flex space-x-4">
             <ButtonGradient1 caption="Facturas Thefactory" className="algo" onClick={() => router.push("/thefactory")} />

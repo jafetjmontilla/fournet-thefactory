@@ -15,7 +15,7 @@ export const ListFileZip: FC<propsListFileZip> = ({ filesZip }) => {
         filesZip?.results?.map((elem: any, idx: any) => {
           return (
             <li key={idx}>
-              <Link href={`http://96.126.110.203:4500/${elem?.path}`} key={idx} className="flex pb-2" >
+              <Link href={`https://api-v1.sistemasjaihom.com/${elem?.path}`} key={idx} className="flex pb-2" >
                 <IconFolderArrowDown className="w-10 h-10 text-gray-600" />
                 <div className="grid pl-2">
                   <span className="font-display  font-medium">{` ${elem?.path.split("/")[1]}`}</span>

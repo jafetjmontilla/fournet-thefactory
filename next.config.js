@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['api.bodasdehoy.com', '96.126.110.203'],
+    domains: ['api.bodasdehoy.com', 'api-v1.sistemasjaihom.com'],
   },
   reactStrictMode: true,
   swcMinify: true,

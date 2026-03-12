@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { CheckIcon, IconCancel, IconDelete, IconFolderArrowDown, IconUsdSquare } from "../icons"
 import { FC, memo, useEffect, useRef, useState } from "react";
-import { fetchApiBodas, queries } from "../utils/Fetching";
+import { fetchApiBodas, fetchApiJaihom, queries } from "../utils/Fetching";
 import { getDate } from "../utils/time";
 
 const options = {
@@ -36,8 +36,8 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
   const [showConfirmation, setShowConfirmation] = useState<any>({ value: false, values: [] })
 
   useEffect(() => {
-    fetchApiBodas({
-      query: queries.getTasaBCV,
+    fetchApiJaihom({
+      query: queries.getTasasBCV,
       variables: {
         limit: 0,
         skip: 0,
@@ -45,16 +45,16 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
       },
     }).then((resp: any) => {
       setTasasBCV(resp)
-      // const asd = resp?.results?.map((elem: any, idx: any) => { return false })
+      // const asd = resp?.map((elem: any, idx: any) => { return false })
       // setShowConfirmation({ value: false, values: asd })
       setRes(null)
     })
   }, [res])
 
   useEffect(() => {
-    const asd = tasasBCV?.results?.map((elem: any, idx: any) => { return false })
+    const asd = tasasBCV?.map((elem: any, idx: any) => { return false })
     setShowConfirmation({ value: false, values: asd })
-  }, [tasasBCV?.results])
+  }, [tasasBCV])
 
   const createTasa = async () => {
     const result: any = await fetchApiBodas({
@@ -90,7 +90,7 @@ export const TasasBCV: FC<propsTasaBCV> = ({ filesZip, addTasa, setAddTasa, tasa
         </li>
       }
       {
-        tasasBCV?.results?.map((elem: any, idx: any) => {
+        tasasBCV?.map((elem: any, idx: any) => {
           return (
             <li key={idx}>
 

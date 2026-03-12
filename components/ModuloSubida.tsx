@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, EditarIcon, FolderPlus, TableCells } from "../icons";
-import { fetchApiBodas, queries } from "../utils/Fetching";
+import { fetchApiBodas, fetchApiJaihom, queries } from "../utils/Fetching";
 import { BotonConfirmar } from "./BotonConfimar";
 
 export const ModuloSubida = ({ setFilesZip, args, ...props }) => {
@@ -9,7 +9,7 @@ export const ModuloSubida = ({ setFilesZip, args, ...props }) => {
 
   const subir_archivo = async () => {
     if (file) {
-      await fetchApiBodas({
+      await fetchApiJaihom({
         query: queries.fileUpload,
         variables: { file, args },
         type: "formData"

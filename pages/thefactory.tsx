@@ -4,7 +4,7 @@ import { Menu } from "../components/Menu";
 import { MenuButton } from "../components/MenuButton";
 import { SectionSwiper } from "../components/SectionSwiper";
 import { ModuloSubida } from "../components/ModuloSubida";
-import { fetchApiBodas, queries } from "../utils/Fetching";
+import { fetchApiBodas, fetchApiJaihom, queries } from "../utils/Fetching";
 import Link from "next/link";
 import { IconAddCircleLine, IconFolderArrowDown } from "../icons";
 import { ListFileZip } from "../components/ListFileZip";
@@ -20,7 +20,7 @@ export default function Home() {
   const [addTasa, setAddTasa] = useState<any>(false)
 
   useEffect(() => {
-    fetchApiBodas({
+    fetchApiJaihom({
       query: queries.getUploadFiles,
       variables: {
         limit: 7,
@@ -30,8 +30,8 @@ export default function Home() {
     }).then((resp: any) => {
       setFilesZip(resp)
     })
-    fetchApiBodas({
-      query: queries.getTasaBCV,
+    fetchApiJaihom({
+      query: queries.getTasasBCV,
       variables: {
         limit: 0,
         skip: 0,
@@ -70,7 +70,7 @@ export default function Home() {
           <div className="w-full h-[300px] border border-gray-300 bg-white rounded-xl mt-10 p-2">
             <div className="flex">
               <span className="font-display text-lg font-medium">Tasa diaria BCV</span>
-              <IconAddCircleLine className="ml-10 w-8 h-8 cursor-pointer text-gray-600" onClick={() => { setAddTasa(!addTasa) }} />
+              {/* <IconAddCircleLine className="ml-10 w-8 h-8 cursor-pointer text-gray-600" onClick={() => { setAddTasa(!addTasa) }} /> */}
             </div>
             <div className=" h-[90%] overflow-auto">
               <TasasBCV filesZip={filesZip} addTasa={addTasa} setAddTasa={setAddTasa} tasasBCV={tasasBCV} setTasasBCV={setTasasBCV} />
