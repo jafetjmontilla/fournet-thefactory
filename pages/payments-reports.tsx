@@ -44,7 +44,7 @@ const formasPagoReport = [
   },
   {
     "id": 37516,
-    "nombre": "SELLE PORTAL PAGO"
+    "nombre": "ZELLE PORTAL PAGO"
   },
 ]
 
@@ -127,7 +127,9 @@ export default function PaymentsReports() {
   const [updated, setUpdated] = useState('');
   const [showSpinner, setShowSpinner] = useState<boolean>(false)
   const [columnVisibility, setColumnVisibility] = React.useState({
+    cedula: true,
     id_factura: true,
+    userName: true,
     estado: true,
     total_cobrado: true,
     accion: false,
@@ -205,10 +207,30 @@ export default function PaymentsReports() {
   }
 
   const columnsPaymentReport = useMemo<ColumnDef<PaymentReportResult>[]>(() => [
+    columnHelperPaymentReport.accessor('cedula', {
+      id: 'cedula',
+      header: () => <span>Cédula</span>,
+      cell: info => <div className="text-center">{info.getValue() ?? '-'}</div>,
+      footer: info => info.column.id,
+      filterFn: 'fuzzy',
+      sortingFn: fuzzySort,
+      enableHiding: false,
+      size: 120,
+    }),
     columnHelperPaymentReport.accessor('id_factura', {
       id: 'id_factura',
       header: () => <span>ID Factura</span>,
       cell: info => <div className="text-center">{info.getValue()}</div>,
+      footer: info => info.column.id,
+      filterFn: 'fuzzy',
+      sortingFn: fuzzySort,
+      enableHiding: false,
+      size: 120,
+    }),
+    columnHelperPaymentReport.accessor('userName', {
+      id: 'userName',
+      header: () => <span>Usuario</span>,
+      cell: info => <div className="text-center">{info.getValue() ?? '-'}</div>,
       footer: info => info.column.id,
       filterFn: 'fuzzy',
       sortingFn: fuzzySort,

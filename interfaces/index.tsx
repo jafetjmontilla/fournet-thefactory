@@ -17,7 +17,9 @@ export interface FetchPaymentReportResults extends Fectching {
 export type PaymentReportEstado = "procesado" | "no procesado"
 
 export interface PaymentReportResult {
+  cedula: string
   id_factura: string
+  userName: string
   estado: PaymentReportEstado
   total_cobrado: number
   accion: number

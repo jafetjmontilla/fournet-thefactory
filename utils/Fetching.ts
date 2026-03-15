@@ -136,6 +136,7 @@ export const queries: queries = {
         total
         forma_pago
         telefono
+        userName
         createdAt
         updatedAt
       }
