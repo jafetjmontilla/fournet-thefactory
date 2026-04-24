@@ -31,8 +31,10 @@ const proveedoresGuardados = [
 export default function RetentionIVA() {
   const { showToast, ToastContainer } = useToast();
   const [retencion, setRetencion] = useState({
-    Serie: "",
-    NumeroDocumento: "",
+    SerieIva: "",
+    NumeroDocumentoIva: "",
+    SerieIslr: "",
+    NumeroDocumentoIslr: "",
     FechaEmision: getToday()
   });
   const [proveedor, setProveedor] = useState({
@@ -52,6 +54,8 @@ export default function RetentionIVA() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef();
   const debounceRef = useRef<NodeJS.Timeout>();
+  const [isIva, setIsIva] = useState(false);
+  const [isIslr, setIsIslr] = useState(false);
 
   // Refs para inputs de proveedor y retención
   const retencionRefs: RefObject<HTMLInputElement>[] = [useRef(null), useRef(null), useRef(null)];
@@ -71,7 +75,9 @@ export default function RetentionIVA() {
       Retenido: "",
       Porcentaje: "",
       RetenidoIVA: "",
-      Percibido: ""
+      Percibido: "",
+      PorcentajeISLR: "",
+      RetenidoISLR: ""
     }
   ]);
 
@@ -90,22 +96,25 @@ export default function RetentionIVA() {
     );
   }, []);
 
-  // Función para calcular automáticamente los montos
+  // Función para calcular automáticamente los montos iva
   const calcularMontos = (factura, index) => {
     const baseImponible = parseFloat(factura.BaseImponible) || 0;
     const porcentajeRetencion = parseFloat(factura.Porcentaje) || 0;
+    const porcentajeRetencionISLR = parseFloat(factura.PorcentajeISLR) || 0;
 
     // Calcular Monto IVA (Base Imponible * 16%)
     const montoIVA = baseImponible * 0.16;
 
     // Calcular Monto Retenido (Monto IVA * % Retención)
     const montoRetenido = montoIVA * (porcentajeRetencion / 100);
+    const montoRetenidoISLR = baseImponible * (porcentajeRetencionISLR / 100);
 
     const facturasActualizadas = [...facturas];
     facturasActualizadas[index] = {
       ...factura,
       MontoIVA: montoIVA.toFixed(2),
-      Retenido: montoRetenido.toFixed(2)
+      Retenido: montoRetenido.toFixed(2),
+      RetenidoISLR: montoRetenidoISLR.toFixed(2)
     };
 
     setFacturas(facturasActualizadas);
@@ -283,7 +292,7 @@ export default function RetentionIVA() {
   };
 
   // Función para generar ZIP con JSONs
-  const generarZip = async () => {
+  const generarZip = async ({ isIva, isIslr }: { isIva: boolean, isIslr: boolean }) => {
     try {
       // Obtener numeración continua del localStorage
       const lastNumber = localStorage.getItem('retencion_iva_counter') || '0';
@@ -303,8 +312,8 @@ export default function RetentionIVA() {
         "DocumentoElectronico": {
           "Encabezado": {
             "IdentificacionDocumento": {
-              "TipoDocumento": "05",
-              "NumeroDocumento": retencion.NumeroDocumento || "00002",
+              "TipoDocumento": "",
+              "NumeroDocumento": retencion.NumeroDocumentoIva || "00002",
               "TipoProveedor": null,
               "TipoTransaccion": "01",
               "NumeroPlanillaImportacion": null,
@@ -320,7 +329,7 @@ export default function RetentionIVA() {
               "HoraEmision": formatearHora(),
               "Anulado": false,
               "TipoDePago": "importado",
-              "Serie": retencion.Serie || "",
+              "Serie": retencion.SerieIva || "",
               "Sucursal": "0000",
               "TipoDeVenta": "interna",
               "Moneda": "VES"
@@ -333,16 +342,18 @@ export default function RetentionIVA() {
               "RazonSocial": proveedor.name || "Proveedor de Prueba",
               "Direccion": proveedor.address || "Av principal de prueba, donde estan los proveedores",
               "Pais": "VE",
-              "Telefono": proveedor.phone ? [proveedor.phone] : ["02122447664"],
+              "Telefono": proveedor.phone ? [proveedor.phone] : ["02121234567"],
               "Correo": proveedor.email ? [proveedor.email] : ["jafetmontilla@gmail.com"]
             },
             "Totales": null,
             "TotalesRetencion": {
               "FechaEmisionCR": retencion.FechaEmision ? formatearFecha(retencion.FechaEmision) : formatearFecha(new Date()),
-              "NumeroCompRetencion": retencion.NumeroDocumento || "00002",
-              "TotalBaseImponible": "0.00", // Se calculará sumando todas las facturas
-              "TotalIVA": "0.00", // Se calculará sumando todas las facturas
-              "TotalRetenido": "0.00" // Se calculará sumando todas las facturas
+              "NumeroCompRetencion": retencion.NumeroDocumentoIva || "00002",
+              "TotalBaseImponible": null, // Se calculará sumando todas las facturas
+              "TotalIVA": null, // Se calculará sumando todas las facturas
+              "TotalRetenido": null, // Se calculará sumando todas las facturas
+              "TotalISRL": null, // Se calculará sumando todas las facturas
+              "TipoComprobante": null
             }
           },
           "DetallesItems": null,
@@ -353,65 +364,120 @@ export default function RetentionIVA() {
         }
       };
 
-      // Calcular totales
-      let totalBaseImponible = 0;
-      let totalIVA = 0;
-      let totalRetenido = 0;
 
-      // Agregar cada factura como DetalleRetencion
-      facturas.forEach((factura, index) => {
-        const baseImponible = parseFloat(factura.BaseImponible) || 0;
-        const montoIVA = parseFloat(factura.MontoIVA) || 0;
-        const retenido = parseFloat(factura.Retenido) || 0;
+      // Agregar cada factura como DetalleRetencion IVA
+      const ivaJson = structuredClone(baseJson);
+      if (isIva) {
+        let totalBaseImponible = 0;
+        let totalIVA = 0;
+        let totalRetenido = 0;
+        facturas.forEach((factura, index) => {
+          const baseImponible = parseFloat(factura.BaseImponible) || 0;
+          const montoIVA = parseFloat(factura.MontoIVA) || 0;
+          const retenido = parseFloat(factura.Retenido) || 0;
 
-        totalBaseImponible += baseImponible;
-        totalIVA += montoIVA;
-        totalRetenido += retenido;
+          // Calcular totales
+          totalBaseImponible += baseImponible;
+          totalIVA += montoIVA;
+          totalRetenido += retenido;
 
-        const detalleRetencion = {
-          "NumeroLinea": (index + 1).toString(),
-          "FechaDocumento": factura.FechaDocumento ? formatearFecha(factura.FechaDocumento) : formatearFecha(new Date()),
-          "SerieDocumento": factura.SerieDocumento || "A",
-          "TipoDocumento": "01",
-          "NumeroDocumento": factura.NumeroDocumento || "000070",
-          "NumeroControl": factura.NumeroControl || "00-000070",
-          "TipoTransaccion": "01",
-          "MontoTotal": factura.MontoTotal || "11.60",
-          "MontoExento": factura.MontoExento || "0",
-          "BaseImponible": factura.BaseImponible || "10.00",
-          "PorcentajeIVA": factura.PorcentajeIVA || "16.00",
-          "MontoIVA": factura.MontoIVA || "1.60",
-          "Retenido": factura.Retenido || "100",
-          "Porcentaje": factura.Porcentaje || "100",
-          "RetenidoIVA": factura.Porcentaje || "100",
-          "Percibido": factura.Retenido || "100",
-          "Moneda": "VES",
-          "InfoAdicionalItem": [
-            {
-              "Campo": "prueba pdf",
-              "Valor": "resutado prueba"
-            }
-          ]
-        };
+          const detalleRetencion = {
+            "NumeroLinea": (index + 1).toString(),
+            "FechaDocumento": factura.FechaDocumento ? formatearFecha(factura.FechaDocumento) : formatearFecha(new Date()),
+            "SerieDocumento": factura.SerieDocumento || "",
+            "TipoDocumento": "01",
+            "NumeroDocumento": factura.NumeroDocumento || "000070",
+            "NumeroControl": factura.NumeroControl || "00-000070",
+            "TipoTransaccion": "01",
+            "MontoTotal": factura.MontoTotal || "11.60",
+            "MontoExento": factura.MontoExento || "0",
+            "BaseImponible": factura.BaseImponible || "10.00",
+            "PorcentajeIVA": factura.PorcentajeIVA || "16.00",
+            "MontoIVA": factura.MontoIVA || "1.60",
+            "Retenido": factura.Retenido || "100",
+            "Porcentaje": factura.Porcentaje || "100",
+            "RetenidoIVA": factura.Porcentaje || "100",
+            "Percibido": factura.Retenido || "100",
+            "Moneda": "VES",
+            "InfoAdicionalItem": [
+              {
+                "Campo": "prueba pdf",
+                "Valor": "resutado prueba"
+              }
+            ]
+          };
 
-        baseJson.DocumentoElectronico.DetallesRetencion.push(detalleRetencion);
-      });
+          ivaJson.DocumentoElectronico.DetallesRetencion.push(detalleRetencion);
+        });
+        // Actualizar totales
+        ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalBaseImponible = totalBaseImponible.toFixed(2);
+        ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalIVA = totalIVA.toFixed(2);
+        ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalRetenido = totalRetenido.toFixed(2);
+      }
 
-      // Actualizar totales
-      baseJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalBaseImponible = totalBaseImponible.toFixed(2);
-      baseJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalIVA = totalIVA.toFixed(2);
-      baseJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalRetenido = totalRetenido.toFixed(2);
+      // Agregar cada factura como DetalleRetencion ISLR
+      const islrJson = structuredClone(baseJson);
+      if (isIslr) {
+        let totalBaseImponible = 0;
+        let totalISRL = 0;
+        facturas.forEach((factura, index) => {
+          const baseImponible = parseFloat(factura.BaseImponible) || 0;
+          const montoISRL = parseFloat(factura.RetenidoISLR) || 0;
 
-      // Crear archivo JSON
-      const jsonContent = JSON.stringify(baseJson, null, 2);
-      const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+          // Calcular totales
+          totalBaseImponible += baseImponible;
+          totalISRL += montoISRL;
+
+          const detalleRetencion = {
+            "NumeroLinea": (index + 1).toString(),
+            "FechaDocumento": factura.FechaDocumento ? formatearFecha(factura.FechaDocumento) : formatearFecha(new Date()),
+            "SerieDocumento": factura.SerieDocumento || "",
+            "TipoDocumento": "01",
+            "NumeroDocumento": factura.NumeroDocumento || "000070",
+            "NumeroControl": factura.NumeroControl || "00-000070",
+            "BaseImponible": factura.BaseImponible || "10.00",
+            "Porcentaje": "0.03",
+            "PorcentajeRetencion": "0.03",
+            "Sustraendo": "1.00",
+            "CodigoConcepto": "025",
+            "Retenido": factura.RetenidoISLR || "100",
+            "Moneda": "VES",
+            "InfoAdicionalItem": [
+              {
+                "Campo": "prueba pdf",
+                "Valor": "resutado prueba"
+              }
+            ]
+          };
+
+          islrJson.DocumentoElectronico.DetallesRetencion.push(detalleRetencion);
+        });
+        // Actualizar totales
+        islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalBaseImponible = totalBaseImponible.toFixed(2);
+        islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalISRL = totalISRL.toFixed(2);
+        islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.TipoComprobante = "1";
+      }
 
       // Crear ZIP usando JSZip
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
 
+
+
       // Agregar el JSON al ZIP
-      zip.file('retencion_iva.json', jsonBlob);
+      if (isIva) {
+        // Crear archivo JSON
+        ivaJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.TipoDocumento = "05";
+        const jsonContent = JSON.stringify(ivaJson, null, 2);
+        const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+        zip.file('retencion_iva.json', jsonBlob);
+      }
+      if (isIslr) { // Crear archivo JSON
+        islrJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.TipoDocumento = "06";
+        const jsonContent = JSON.stringify(islrJson, null, 2);
+        const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+        zip.file('retencion_islr.json', jsonBlob);
+      }
 
       // Generar y descargar el ZIP
       const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -434,16 +500,31 @@ export default function RetentionIVA() {
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
       <ToastContainer />
-      <h1 className="text-2xl font-bold mb-6">Retenciones IVA</h1>
-      <div className="mb-8 border p-4 rounded bg-gray-50">
-        <h2 className="font-semibold mb-2">RETENCIÓN</h2>
-        <div className="grid md:grid-cols-12 gap-4">
-          <InputWithLabel label="Serie" value={retencion.Serie} onChange={e => setRetencion({ ...retencion, Serie: e.target.value })} colSpan="md:col-span-1" ref={retencionRefs[0]} onEnterNext={() => retencionRefs[1].current && retencionRefs[1].current.focus()} />
-          <InputWithLabel label="Número Documento" value={retencion.NumeroDocumento} onChange={e => setRetencion({ ...retencion, NumeroDocumento: e.target.value })} colSpan="md:col-span-2" ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} />
-          <InputWithLabel label="Fecha Emisión" type="date" value={retencion.FechaEmision} onChange={e => setRetencion({ ...retencion, FechaEmision: e.target.value })} colSpan="md:col-span-2" ref={retencionRefs[2]} onEnterNext={() => proveedorRefs[0].current && proveedorRefs[0].current.focus()} />
+      <h1 className="text-2xl font-bold">Retenciones</h1>
+      <div className="flex items-end mb-2 border px-4 py-2 gap-10 rounded bg-gray-50">
+        <InputWithLabel label="Fecha Emisión" type="date" value={retencion.FechaEmision} onChange={e => setRetencion({ ...retencion, FechaEmision: e.target.value })} ref={retencionRefs[2]} onEnterNext={() => proveedorRefs[0].current && proveedorRefs[0].current.focus()} />
+        <div className={`flex flex-col px-4 pt-1 rounded-md border border-gray-300  ${isIva ? 'bg-gray-200' : ''}`}>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-4">
+              <h2 className="font-semibold">IVA</h2>
+              <input type="checkbox" checked={isIva} onChange={() => setIsIva(!isIva)} className="rounded-full" />
+            </div>
+            <InputWithLabel label="Serie IVA" value={retencion.SerieIva} onChange={e => setRetencion({ ...retencion, SerieIva: e.target.value })} ref={retencionRefs[0]} onEnterNext={() => retencionRefs[1].current && retencionRefs[1].current.focus()} className="w-16" />
+            <InputWithLabel label="Número Documento IVA" value={retencion.NumeroDocumentoIva} onChange={e => setRetencion({ ...retencion, NumeroDocumentoIva: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} />
+          </div>
+        </div>
+        <div className={`flex flex-col px-4 pt-1 rounded-md border border-gray-300  ${isIslr ? 'bg-gray-200' : ''}`}>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-4">
+              <h2 className="font-semibold">ISLR</h2>
+              <input type="checkbox" checked={isIslr} onChange={() => setIsIslr(!isIslr)} className="rounded-full" />
+            </div>
+            <InputWithLabel label="Serie ISLR" value={retencion.SerieIslr} onChange={e => setRetencion({ ...retencion, SerieIslr: e.target.value })} ref={retencionRefs[0]} onEnterNext={() => retencionRefs[1].current && retencionRefs[1].current.focus()} className="w-16" />
+            <InputWithLabel label="Número Documento ISLR" value={retencion.NumeroDocumentoIslr} onChange={e => setRetencion({ ...retencion, NumeroDocumentoIslr: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} />
+          </div>
         </div>
       </div>
-      <div className="mb-8 border p-4 rounded bg-gray-50">
+      <div className="mb-2 border p-4 rounded bg-gray-50">
         <h2 className="font-semibold mb-2">DATOS PROVEEDOR</h2>
         <div className="mb-2 flex flex-col md:flex-row md:items-center gap-2">
           <div className="relative w-full md:w-1/2">
@@ -497,7 +578,7 @@ export default function RetentionIVA() {
           <InputWithLabel label="Correo" value={proveedor.email} onChange={e => setProveedor({ ...proveedor, email: e.target.value })} colSpan="md:col-span-5" ref={proveedorRefs[5]} />
         </div>
       </div>
-      <div className="mb-8 border p-4 rounded bg-gray-50">
+      <div className="mb-4 border p-4 rounded bg-gray-50">
         <h2 className="font-semibold mb-2">DATOS FACTURAS</h2>
         <table className="min-w-full text-[11px] border">
           <thead>
@@ -511,8 +592,10 @@ export default function RetentionIVA() {
               <th>Base Imponible</th>
               <th>% IVA</th>
               <th>Monto IVA</th>
-              <th>% Ret</th>
-              <th>Monto Ret</th>
+              <th>% Ret IVA</th>
+              <th>Monto Ret IVA</th>
+              <th>% Ret ISLR</th>
+              <th>Monto Ret ISLR</th>
               {/* <th>Ret IVA</th> */}
               {/* <th>Percibido</th> */}
               <th></th>
@@ -520,12 +603,12 @@ export default function RetentionIVA() {
           </thead>
           <tbody>
             {facturas.map((factura, idx) => {
-              const textSize = "text-[14px]";
-              const wFecha = "w-26";
-              const wSerie = "w-14 text-center";
-              const wNo = "w-[110px] text-center";
-              const wMonto = "w-[122px] text-right";
-              const wPorcentaje = "w-[60px] text-center";
+              const textSize = "text-[13px]";
+              const wFecha = "w-28";
+              const wSerie = "w-10 text-center";
+              const wNo = "w-[90px] text-center";
+              const wMonto = "w-[96px] text-right";
+              const wPorcentaje = "w-[66px] text-center";
               return (
                 <tr key={idx} className="text-[11px]">
                   <td><InputWithLabel type="date" value={factura.FechaDocumento} onChange={e => { const f = [...facturas]; f[idx].FechaDocumento = e.target.value; setFacturas(f); }} className={`${textSize} ${wFecha}`} /></td>
@@ -541,46 +624,59 @@ export default function RetentionIVA() {
                     // Calcular montos automáticamente cuando cambia la base imponible
                     setTimeout(() => calcularMontos(f[idx], idx), 0);
                   }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.PorcentajeIVA} disabled={true} className={`${textSize} ${wPorcentaje} bg-gray-100`} /></td>
-                  <td><InputWithLabel value={factura.MontoIVA} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
-                  <td><InputWithLabel value={factura.Porcentaje} onChange={e => {
+                  <td><InputWithLabel value={factura.PorcentajeIVA} disabled={true} className={`${textSize} ${wPorcentaje} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
+                  <td><InputWithLabel value={factura.MontoIVA} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
+                  <td><InputWithLabel value={factura.Porcentaje} disabled={!isIva} onChange={e => {
                     const f = [...facturas];
                     f[idx].Porcentaje = e.target.value;
                     setFacturas(f);
                     // Calcular montos automáticamente cuando cambia el porcentaje de retención
                     setTimeout(() => calcularMontos(f[idx], idx), 0);
-                  }} className={`${textSize} ${wPorcentaje}`} /></td>
-                  <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100`} /></td>
+                  }} className={`${textSize} ${wPorcentaje} ${isIva ? "" : "bg-gray-100 text-gray-300 border-gray-300"}`} /></td>
+                  <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   {/* <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td> */}
                   {/* <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td> */}
+                  <td><InputWithLabel value={factura.PorcentajeISLR} disabled={!isIslr} onChange={e => {
+                    const f = [...facturas];
+                    f[idx].PorcentajeISLR = e.target.value;
+                    setFacturas(f);
+                    // Calcular montos automáticamente cuando cambia el porcentaje de retención
+                    setTimeout(() => calcularMontos(f[idx], idx), 0);
+                  }} className={`${textSize} ${wPorcentaje} ${isIslr ? '' : 'bg-gray-100 text-gray-300 border-gray-300'}`} /></td>
+                  <td><InputWithLabel value={factura.RetenidoISLR} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIslr ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   <td className="w-full h-8 flex justify-center items-center"><IconDelete className="w-4 h-4 text-gray-700 cursor-pointer hover:text-gray-800" onClick={() => { const f = [...facturas]; f.splice(idx, 1); setFacturas(f); }} /></td>
+
                 </tr>
               )
             })}
           </tbody>
         </table>
-        <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setFacturas([
-          ...facturas,
-          {
-            FechaDocumento: getToday(),
-            SerieDocumento: "",
-            NumeroDocumento: "",
-            NumeroControl: "",
-            MontoTotal: "",
-            MontoExento: "",
-            BaseImponible: "",
-            PorcentajeIVA: "16", // Valor constante
-            MontoIVA: "",
-            Retenido: "",
-            Porcentaje: "",
-            RetenidoIVA: "",
-            Percibido: ""
-          }
-        ])}>Agregar Factura</button>
+        <div className="flex justify-between mt-4">
+          <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setFacturas([
+            ...facturas,
+            {
+              FechaDocumento: getToday(),
+              SerieDocumento: "",
+              NumeroDocumento: "",
+              NumeroControl: "",
+              MontoTotal: "",
+              MontoExento: "",
+              BaseImponible: "",
+              PorcentajeIVA: "16", // Valor constante
+              MontoIVA: "",
+              Retenido: "",
+              Porcentaje: "",
+              RetenidoIVA: "",
+              Percibido: "",
+              PorcentajeISLR: "",
+              RetenidoISLR: ""
+            }
+          ])}>Agregar Factura</button>
+          <button className={`w-60 px-4 py-2 text-white rounded ${isIva || isIslr ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 cursor-not-allowed"}`} onClick={() => generarZip({ isIva, isIslr })}>
+            Generar .zip con {isIva ? "IVA" : ""} {isIva && isIslr ? "y" : ""} {isIslr ? "ISLR" : ""}
+          </button>
+        </div>
       </div>
-      <button className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={generarZip}>
-        Generar ZIP
-      </button>
     </div>
   );
 } 
