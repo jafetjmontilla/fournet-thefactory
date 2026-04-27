@@ -497,6 +497,10 @@ export default function RetentionIVA() {
     }
   };
 
+  useEffect(() => {
+    console.log(facturas);
+  }, [facturas])
+
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
       <ToastContainer />
@@ -615,9 +619,9 @@ export default function RetentionIVA() {
                   <td><InputWithLabel value={factura.SerieDocumento} onChange={e => { const f = [...facturas]; f[idx].SerieDocumento = e.target.value; setFacturas(f); }} className={`${textSize} ${wSerie}`} /></td>
                   <td><InputWithLabel value={factura.NumeroDocumento} onChange={e => { const f = [...facturas]; f[idx].NumeroDocumento = e.target.value; setFacturas(f); }} className={`${textSize} ${wNo}`} /></td>
                   <td><InputWithLabel value={factura.NumeroControl} onChange={e => { const f = [...facturas]; f[idx].NumeroControl = e.target.value; setFacturas(f); }} className={`${textSize} ${wNo}`} /></td>
-                  <td><InputWithLabel value={factura.MontoTotal} onChange={e => { const f = [...facturas]; f[idx].MontoTotal = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.MontoExento} onChange={e => { const f = [...facturas]; f[idx].MontoExento = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
-                  <td><InputWithLabel value={factura.BaseImponible} onChange={e => {
+                  <td><InputWithLabel type="number" value={factura.MontoTotal} onChange={e => { const f = [...facturas]; f[idx].MontoTotal = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
+                  <td><InputWithLabel type="number" value={factura.MontoExento} onChange={e => { const f = [...facturas]; f[idx].MontoExento = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td>
+                  <td><InputWithLabel type="number" value={factura.BaseImponible} onChange={e => {
                     const f = [...facturas];
                     f[idx].BaseImponible = e.target.value;
                     setFacturas(f);
@@ -626,7 +630,7 @@ export default function RetentionIVA() {
                   }} className={`${textSize} ${wMonto}`} /></td>
                   <td><InputWithLabel value={factura.PorcentajeIVA} disabled={true} className={`${textSize} ${wPorcentaje} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   <td><InputWithLabel value={factura.MontoIVA} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
-                  <td><InputWithLabel value={factura.Porcentaje} disabled={!isIva} onChange={e => {
+                  <td><InputWithLabel type="number" value={factura.Porcentaje} disabled={!isIva} onChange={e => {
                     const f = [...facturas];
                     f[idx].Porcentaje = e.target.value;
                     setFacturas(f);
@@ -636,7 +640,7 @@ export default function RetentionIVA() {
                   <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   {/* <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td> */}
                   {/* <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td> */}
-                  <td><InputWithLabel value={factura.PorcentajeISLR} disabled={!isIslr} onChange={e => {
+                  <td><InputWithLabel type="number" value={factura.PorcentajeISLR} disabled={!isIslr} onChange={e => {
                     const f = [...facturas];
                     f[idx].PorcentajeISLR = e.target.value;
                     setFacturas(f);

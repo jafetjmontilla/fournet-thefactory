@@ -19,7 +19,22 @@ export const InputWithLabel = forwardRef<HTMLInputElement, Props>(
         ref={ref}
         type={type}
         value={value}
-        onChange={onChange}
+        onChange={(e) => {
+          if (!onChange) return;
+          const raw = e.target.value;
+          const next =
+            type === "number" ? raw.replace(/,/g, ".") : raw;
+          if (next === raw) {
+            onChange(e);
+            return;
+          }
+          const synthetic = {
+            ...e,
+            target: { ...e.target, value: next },
+            currentTarget: { ...e.currentTarget, value: next },
+          } as React.ChangeEvent<HTMLInputElement>;
+          onChange(synthetic);
+        }}
         disabled={disabled}
         className={`border rounded px-2 py-1 ${className}`}
         onKeyDown={e => {
