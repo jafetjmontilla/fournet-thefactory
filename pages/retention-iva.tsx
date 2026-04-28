@@ -88,7 +88,8 @@ export default function RetentionIVA() {
   const facturaCampos = [
     'FechaDocumento', 'SerieDocumento', 'NumeroDocumento', 'NumeroControl',
     'MontoTotal', 'MontoExento', 'BaseImponible', 'PorcentajeIVA',
-    'MontoIVA', 'Retenido', 'Porcentaje', 'RetenidoIVA', 'Percibido'
+    'MontoIVA', 'Retenido', 'Porcentaje', 'RetenidoIVA', 'Percibido',
+    'PorcentajeISLR', 'RetenidoISLR', 'CodigoConcepto'
   ];
 
   // Crear refs de manera estática - máximo 10 facturas para evitar problemas
@@ -510,6 +511,11 @@ export default function RetentionIVA() {
     }
   };
 
+  useEffect(() => {
+    console.log(10041, retencion);
+  }, [retencion]);
+
+
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
       <ToastContainer />
@@ -534,7 +540,6 @@ export default function RetentionIVA() {
             </div>
             <InputWithLabel label="Serie ISLR" value={retencion.SerieIslr} onChange={e => setRetencion({ ...retencion, SerieIslr: e.target.value })} ref={retencionRefs[0]} onEnterNext={() => retencionRefs[1].current && retencionRefs[1].current.focus()} className="w-16" />
             <InputWithLabel label="Número Documento ISLR" value={retencion.NumeroDocumentoIslr} onChange={e => setRetencion({ ...retencion, NumeroDocumentoIslr: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} />
-            <InputWithLabel label="Cod" value={retencion.CodigoConcepto} onChange={e => setRetencion({ ...retencion, CodigoConcepto: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} className="w-16 text-center" />
           </div>
         </div>
       </div>
@@ -608,6 +613,7 @@ export default function RetentionIVA() {
               <th>Monto IVA</th>
               <th>% Ret IVA</th>
               <th>Monto Ret IVA</th>
+              <th>Cod.</th>
               <th>% Ret ISLR</th>
               <th>Monto Ret ISLR</th>
               {/* <th>Ret IVA</th> */}
@@ -620,8 +626,8 @@ export default function RetentionIVA() {
               const textSize = "text-[13px]";
               const wFecha = "w-28";
               const wSerie = "w-10 text-center";
-              const wNo = "w-[90px] text-center";
-              const wMonto = "w-[96px] text-right";
+              const wNo = "w-[80px] text-center";
+              const wMonto = "w-[92px] text-right";
               const wPorcentaje = "w-[66px] text-center";
               return (
                 <tr key={idx} className="text-[11px]">
@@ -650,6 +656,7 @@ export default function RetentionIVA() {
                   <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   {/* <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td> */}
                   {/* <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td> */}
+                  <td><InputWithLabel value={factura.CodigoConcepto} onChange={e => { const f = [...facturas]; f[idx].CodigoConcepto = e.target.value; setFacturas(f); }} className={`${textSize} ${wSerie}`} /></td>
                   <td><InputWithLabel type="number" value={factura.PorcentajeISLR} disabled={!isIslr} onChange={e => {
                     const f = [...facturas];
                     f[idx].PorcentajeISLR = e.target.value;
@@ -659,7 +666,6 @@ export default function RetentionIVA() {
                   }} className={`${textSize} ${wPorcentaje} ${isIslr ? '' : 'bg-gray-100 text-gray-300 border-gray-300'}`} /></td>
                   <td><InputWithLabel value={factura.RetenidoISLR} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIslr ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   <td className="w-full h-8 flex justify-center items-center"><IconDelete className="w-4 h-4 text-gray-700 cursor-pointer hover:text-gray-800" onClick={() => { const f = [...facturas]; f.splice(idx, 1); setFacturas(f); }} /></td>
-
                 </tr>
               )
             })}
