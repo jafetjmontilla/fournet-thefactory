@@ -511,11 +511,6 @@ export default function RetentionIVA() {
     }
   };
 
-  useEffect(() => {
-    console.log(10041, retencion);
-  }, [retencion]);
-
-
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
       <ToastContainer />
@@ -656,7 +651,7 @@ export default function RetentionIVA() {
                   <td><InputWithLabel value={factura.Retenido} disabled={true} className={`${textSize} ${wMonto} bg-gray-100 ${isIva ? "" : "text-gray-300 border-gray-300"}`} /></td>
                   {/* <td><InputWithLabel value={factura.RetenidoIVA} onChange={e => { const f = [...facturas]; f[idx].RetenidoIVA = e.target.value; setFacturas(f); }} className={`${textSize} ${wPorcentaje}`} /></td> */}
                   {/* <td><InputWithLabel value={factura.Percibido} onChange={e => { const f = [...facturas]; f[idx].Percibido = e.target.value; setFacturas(f); }} className={`${textSize} ${wMonto}`} /></td> */}
-                  <td><InputWithLabel value={factura.CodigoConcepto} onChange={e => { const f = [...facturas]; f[idx].CodigoConcepto = e.target.value; setFacturas(f); }} className={`${textSize} ${wSerie}`} /></td>
+                  <td><InputWithLabel value={factura.CodigoConcepto} disabled={!isIslr} onChange={e => { const f = [...facturas]; f[idx].CodigoConcepto = e.target.value; setFacturas(f); }} className={`${textSize} ${wSerie}  ${isIslr ? '' : 'bg-gray-100 text-gray-300 border-gray-300'}`} /></td>
                   <td><InputWithLabel type="number" value={factura.PorcentajeISLR} disabled={!isIslr} onChange={e => {
                     const f = [...facturas];
                     f[idx].PorcentajeISLR = e.target.value;
