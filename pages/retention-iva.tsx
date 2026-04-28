@@ -35,7 +35,8 @@ export default function RetentionIVA() {
     NumeroDocumentoIva: "",
     SerieIslr: "",
     NumeroDocumentoIslr: "",
-    FechaEmision: getToday()
+    FechaEmision: getToday(),
+    CodigoConcepto: ""
   });
 
   const [proveedor, setProveedor] = useState({
@@ -78,7 +79,8 @@ export default function RetentionIVA() {
       RetenidoIVA: "",
       Percibido: "",
       PorcentajeISLR: "",
-      RetenidoISLR: ""
+      RetenidoISLR: "",
+      CodigoConcepto: ""
     }
   ]);
 
@@ -274,10 +276,13 @@ export default function RetentionIVA() {
 
   // Función para formatear fecha en formato dd/mm/yyyy
   const formatearFecha = (fecha: string | Date) => {
-    const date = new Date(fecha);
-    const dia = date.getDate().toString().padStart(2, '0');
-    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    const año = date.getFullYear();
+    if (fecha instanceof Date) {
+      fecha = fecha.toISOString().split('T')[0];
+    }
+    const d = fecha.split('-');
+    const dia = d[2].padStart(2, '0');
+    const mes = d[1].padStart(2, '0');
+    const año = d[0];
     return `${dia}/${mes}/${año}`;
   };
 
@@ -439,11 +444,13 @@ export default function RetentionIVA() {
             "TipoDocumento": "01",
             "NumeroDocumento": factura.NumeroDocumento || "",
             "NumeroControl": factura.NumeroControl || "",
+            "MontoTotal": factura.MontoTotal || "",
+            "MontoExento": factura.MontoExento || "",
             "BaseImponible": factura.BaseImponible || "",
             "Porcentaje": factura.PorcentajeISLR || "",
             "PorcentajeRetencion": factura.PorcentajeISLR || "",
             "Sustraendo": "1.00",
-            "CodigoConcepto": "025",
+            "CodigoConcepto": factura.CodigoConcepto || "",
             "Retenido": factura.RetenidoISLR || "",
             "Moneda": "VES",
             "InfoAdicionalItem": [
@@ -528,6 +535,7 @@ export default function RetentionIVA() {
             </div>
             <InputWithLabel label="Serie ISLR" value={retencion.SerieIslr} onChange={e => setRetencion({ ...retencion, SerieIslr: e.target.value })} ref={retencionRefs[0]} onEnterNext={() => retencionRefs[1].current && retencionRefs[1].current.focus()} className="w-16" />
             <InputWithLabel label="Número Documento ISLR" value={retencion.NumeroDocumentoIslr} onChange={e => setRetencion({ ...retencion, NumeroDocumentoIslr: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} />
+            <InputWithLabel label="Cod" value={retencion.CodigoConcepto} onChange={e => setRetencion({ ...retencion, CodigoConcepto: e.target.value })} ref={retencionRefs[1]} onEnterNext={() => retencionRefs[2].current && retencionRefs[2].current.focus()} className="w-16 text-center" />
           </div>
         </div>
       </div>
@@ -676,7 +684,8 @@ export default function RetentionIVA() {
               RetenidoIVA: "",
               Percibido: "",
               PorcentajeISLR: "",
-              RetenidoISLR: ""
+              RetenidoISLR: "",
+              CodigoConcepto: ""
             }
           ])}>Agregar Factura</button>
           <button className={`w-60 px-4 py-2 text-white rounded ${isIva || isIslr ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 cursor-not-allowed"}`} onClick={() => generarZip({ isIva, isIslr })}>
