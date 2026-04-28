@@ -37,6 +37,7 @@ export default function RetentionIVA() {
     NumeroDocumentoIslr: "",
     FechaEmision: getToday()
   });
+
   const [proveedor, setProveedor] = useState({
     letterIdentifier: "",
     numberIdentifier: "",
@@ -313,7 +314,7 @@ export default function RetentionIVA() {
           "Encabezado": {
             "IdentificacionDocumento": {
               "TipoDocumento": "",
-              "NumeroDocumento": retencion.NumeroDocumentoIva || "00002",
+              "NumeroDocumento": null,
               "TipoProveedor": null,
               "TipoTransaccion": "01",
               "NumeroPlanillaImportacion": null,
@@ -329,7 +330,7 @@ export default function RetentionIVA() {
               "HoraEmision": formatearHora(),
               "Anulado": false,
               "TipoDePago": "importado",
-              "Serie": retencion.SerieIva || "",
+              "Serie": null,
               "Sucursal": "0000",
               "TipoDeVenta": "interna",
               "Moneda": "VES"
@@ -348,7 +349,7 @@ export default function RetentionIVA() {
             "Totales": null,
             "TotalesRetencion": {
               "FechaEmisionCR": retencion.FechaEmision ? formatearFecha(retencion.FechaEmision) : formatearFecha(new Date()),
-              "NumeroCompRetencion": retencion.NumeroDocumentoIva || "00002",
+              "NumeroCompRetencion": null,
               "TotalBaseImponible": null, // Se calculará sumando todas las facturas
               "TotalIVA": null, // Se calculará sumando todas las facturas
               "TotalRetenido": null, // Se calculará sumando todas las facturas
@@ -409,6 +410,9 @@ export default function RetentionIVA() {
 
           ivaJson.DocumentoElectronico.DetallesRetencion.push(detalleRetencion);
         });
+        ivaJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.NumeroDocumento = retencion.NumeroDocumentoIva || "";
+        ivaJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.Serie = retencion.SerieIva || "";
+        ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.NumeroCompRetencion = retencion.NumeroDocumentoIva || "";
         // Actualizar totales
         ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalBaseImponible = totalBaseImponible.toFixed(2);
         ivaJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalIVA = totalIVA.toFixed(2);
@@ -433,14 +437,14 @@ export default function RetentionIVA() {
             "FechaDocumento": factura.FechaDocumento ? formatearFecha(factura.FechaDocumento) : formatearFecha(new Date()),
             "SerieDocumento": factura.SerieDocumento || "",
             "TipoDocumento": "01",
-            "NumeroDocumento": factura.NumeroDocumento || "000070",
-            "NumeroControl": factura.NumeroControl || "00-000070",
-            "BaseImponible": factura.BaseImponible || "10.00",
-            "Porcentaje": "0.03",
-            "PorcentajeRetencion": "0.03",
+            "NumeroDocumento": factura.NumeroDocumento || "",
+            "NumeroControl": factura.NumeroControl || "",
+            "BaseImponible": factura.BaseImponible || "",
+            "Porcentaje": factura.PorcentajeISLR || "",
+            "PorcentajeRetencion": factura.RetenidoISLR || "",
             "Sustraendo": "1.00",
             "CodigoConcepto": "025",
-            "Retenido": factura.RetenidoISLR || "100",
+            "Retenido": factura.RetenidoISLR || "",
             "Moneda": "VES",
             "InfoAdicionalItem": [
               {
@@ -452,6 +456,9 @@ export default function RetentionIVA() {
 
           islrJson.DocumentoElectronico.DetallesRetencion.push(detalleRetencion);
         });
+        islrJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.NumeroDocumento = retencion.NumeroDocumentoIslr || "";
+        islrJson.DocumentoElectronico.Encabezado.IdentificacionDocumento.Serie = retencion.SerieIslr || "";
+        islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.NumeroCompRetencion = retencion.NumeroDocumentoIslr || "";
         // Actualizar totales
         islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalBaseImponible = totalBaseImponible.toFixed(2);
         islrJson.DocumentoElectronico.Encabezado.TotalesRetencion.TotalISRL = totalISRL.toFixed(2);
@@ -496,10 +503,6 @@ export default function RetentionIVA() {
       showToast("Error al generar el archivo ZIP", "error");
     }
   };
-
-  useEffect(() => {
-    console.log(facturas);
-  }, [facturas])
 
   return (
     <div className="p-8 max-w-screen-xl mx-auto">
