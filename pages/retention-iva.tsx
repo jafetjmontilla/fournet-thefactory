@@ -445,7 +445,6 @@ export default function RetentionIVA() {
             "NumeroDocumento": factura.NumeroDocumento || "",
             "NumeroControl": factura.NumeroControl || "",
             "MontoTotal": factura.MontoTotal || "",
-            "MontoExento": factura.MontoExento || "",
             "BaseImponible": factura.BaseImponible || "",
             "Porcentaje": factura.PorcentajeISLR || "",
             "PorcentajeRetencion": factura.PorcentajeISLR || "",
