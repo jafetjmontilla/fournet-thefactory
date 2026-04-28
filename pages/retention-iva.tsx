@@ -441,7 +441,7 @@ export default function RetentionIVA() {
             "NumeroControl": factura.NumeroControl || "",
             "BaseImponible": factura.BaseImponible || "",
             "Porcentaje": factura.PorcentajeISLR || "",
-            "PorcentajeRetencion": factura.RetenidoISLR || "",
+            "PorcentajeRetencion": factura.PorcentajeISLR || "",
             "Sustraendo": "1.00",
             "CodigoConcepto": "025",
             "Retenido": factura.RetenidoISLR || "",
